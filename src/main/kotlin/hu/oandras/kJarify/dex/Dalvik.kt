@@ -36,7 +36,7 @@ val INVOKE_TYPES: Array<DalvikOpcode> = arrayOf(
 
 @Suppress("unused")
 @JvmField
-val THROW_TYPES: Array<DalvikOpcode> = arrayOf(
+val THROW_TYPES: Set<DalvikOpcode> = arraySetOf(
     DalvikOpcode.InvokeVirtual,
     DalvikOpcode.InvokeSuper,
     DalvikOpcode.InvokeDirect,
@@ -65,7 +65,7 @@ val THROW_TYPES: Array<DalvikOpcode> = arrayOf(
 )
 
 @JvmField
-val PRUNED_THROW_TYPES: Array<DalvikOpcode> = arrayOf(
+val PRUNED_THROW_TYPES: Set<DalvikOpcode> = arraySetOf(
     DalvikOpcode.InvokeVirtual,
     DalvikOpcode.InvokeSuper,
     DalvikOpcode.InvokeDirect,
