@@ -16,13 +16,13 @@ It has a similar capabilities as the original EnJarify written in Python ([sourc
 #### In Java
 
     void example(File input, File output) {
-        KEnJarify.process(inputFile, outputFile, OptimizationOptions.PRETTY);
+        KJarify.process(inputFile, outputFile, OptimizationOptions.PRETTY);
     }
 
 #### In kotlin with coroutines
 
     suspend fun example(input: File, output: File) {
-        KEnJarify.suspendProcess(input, output, OptimizationOptions.PRETTY)
+        KJarify.suspendProcess(input, output, OptimizationOptions.PRETTY)
     }
 
 #### More advanced

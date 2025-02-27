@@ -185,6 +185,7 @@ class DexProcessor(
                 println("Processing... $translated classes processed, error count: $errors, total: $total")
             } else {
                 println("$translated classes translated successfully, $errors classes had errors.")
+                println("Waiting to the compression to complete...")
             }
         }
     }

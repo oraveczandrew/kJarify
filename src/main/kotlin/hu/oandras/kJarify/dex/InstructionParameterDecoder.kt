@@ -25,7 +25,7 @@ import hu.oandras.kJarify.dex.DalvikInstructionParameter.*
 import hu.oandras.kJarify.keysToRanges
 import kotlin.math.min
 
-internal object InstructionDecoder {
+internal object InstructionParameterDecoder {
 
     private val INSTRUCTION_FORMAT: IntObjectMap<String> = keysToRanges(
         MutableIntObjectMap<String>().apply {

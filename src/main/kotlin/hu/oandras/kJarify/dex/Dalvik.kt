@@ -149,7 +149,7 @@ fun parseInstruction(
 ): DalvikInstruction {
     val word = shorts[position]
     val opcode = word and 0xFF
-    val result = InstructionDecoder.decode(shorts, position, opcode)
+    val result = InstructionParameterDecoder.decode(shorts, position, opcode)
     var newPos = result.pos
     val args = result.args
 

@@ -42,6 +42,7 @@ interface DexReader {
     }
 
     object ApkDexFileReader : DexReader {
+
         override fun read(filePath: String): List<ByteArray> {
             val dexList: MutableList<ByteArray> = ArrayList<ByteArray>()
 

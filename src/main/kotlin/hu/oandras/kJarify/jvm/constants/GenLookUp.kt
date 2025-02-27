@@ -273,12 +273,12 @@ internal object GenLookUp {
 
     class LookupTables(
         @JvmField
-        val allInts: IntObjectMap<ByteArray>,
+        val allInts: IntLookupTable,
         @JvmField
-        val allFloats: IntObjectMap<ByteArray>,
+        val allFloats: IntLookupTable,
         @JvmField
-        val allLongs: LongObjectMap<ByteArray>,
+        val allLongs: LongLookupTable,
         @JvmField
-        val allDoubles: LongObjectMap<ByteArray>
+        val allDoubles: LongLookupTable
     )
 }

@@ -26,7 +26,7 @@ import kotlinx.coroutines.runBlocking
 import java.io.File
 
 @Suppress("unused")
-object KEnJarify {
+object KJarify {
 
     @JvmStatic
     fun process(
