@@ -29,6 +29,7 @@ import org.apache.commons.cli.Options
 import java.io.IOException
 import java.text.ParseException
 import java.util.Map
+import java.util.zip.Deflater
 
 fun main(args: Array<String>): Unit = runBlocking {
     mainImpl(args)
@@ -61,6 +62,7 @@ internal suspend fun mainImpl(args: Array<String>) {
         val jarWriter = JarOutputStream(
             path = outputName,
             force = cmd.hasOption("f"),
+            compressionLevel = Deflater.DEFAULT_COMPRESSION,
         )
 
         val dexReader = if (inputFile.endsWith(".apk", ignoreCase = true)) {

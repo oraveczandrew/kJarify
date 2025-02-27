@@ -27,14 +27,20 @@ import java.util.zip.ZipOutputStream
 
 class JarOutputStream private constructor(
     file: File,
+    compressionLevel: Int,
 ) : ZipOutputStream(FileOutputStream(file)) {
 
     private val mutex: Mutex = Mutex()
+
+    init {
+        setLevel(compressionLevel)
+    }
 
     @Suppress("RemoveRedundantQualifierName")
     constructor(
         path: String,
         force: Boolean,
+        compressionLevel: Int,
     ) : this(
         kotlin.run {
             val outfile = File(path)
@@ -46,7 +52,8 @@ class JarOutputStream private constructor(
                 }
             }
             outfile
-        }
+        },
+        compressionLevel,
     )
 
     suspend fun writeClass(unicodeName: String, data: ByteArray) {

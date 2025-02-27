@@ -24,31 +24,37 @@ import hu.oandras.kJarify.streams.JarOutputStream
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import java.io.File
+import java.util.zip.Deflater
 
 @Suppress("unused")
 object KJarify {
 
+    @JvmOverloads
     @JvmStatic
     fun process(
         input: File,
         output: File,
-        optimizationOptions: OptimizationOptions
+        optimizationOptions: OptimizationOptions,
+        jarCompressionLevel: Int = Deflater.DEFAULT_COMPRESSION,
     ) = runBlocking(Dispatchers.Unconfined) {
         suspendProcess(
             input = input,
             output = output,
-            optimizationOptions = optimizationOptions
+            optimizationOptions = optimizationOptions,
+            jarCompressionLevel = jarCompressionLevel,
         )
     }
 
     suspend fun suspendProcess(
         input: File,
         output: File,
-        optimizationOptions: OptimizationOptions
+        optimizationOptions: OptimizationOptions,
+        jarCompressionLevel: Int = Deflater.DEFAULT_COMPRESSION,
     ) {
         val jarWriter = JarOutputStream(
             path = output.absolutePath,
             force = true,
+            compressionLevel = jarCompressionLevel,
         )
 
         val inputFile = input.absolutePath
