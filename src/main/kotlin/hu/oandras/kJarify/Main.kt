@@ -28,7 +28,6 @@ import org.apache.commons.cli.DefaultParser
 import org.apache.commons.cli.Options
 import java.io.IOException
 import java.text.ParseException
-import java.util.Map
 import java.util.zip.Deflater
 
 fun main(args: Array<String>): Unit = runBlocking {
@@ -74,8 +73,8 @@ internal suspend fun mainImpl(args: Array<String>) {
         val dexDataList = dexReader.read(filePath = inputFile)
 
         val callback = object : DexProcessor.SysOutProcessStatusCallBack() {
-            override suspend fun suspendOnClassTranslated(unicodeName: String, classData: ByteArray) {
-                jarWriter.writeClass(unicodeName, classData)
+            override suspend fun suspendOnClassTranslated(unicodeRelativePath: String, classData: ByteArray) {
+                jarWriter.writeClass(unicodeRelativePath, classData)
             }
         }
 
@@ -99,13 +98,13 @@ internal suspend fun mainImpl(args: Array<String>) {
     }
 }
 
-private fun printErrors(errors: LinkedHashMap<String, String>) {
+private fun printErrors(errors: Map<String, String>) {
     if (errors.isEmpty()) {
         return
     }
 
     println("Errors: ")
-    errors.entries.stream().sorted(Map.Entry.comparingByKey()).forEach { entry ->
+    errors.entries.stream().forEach { entry ->
         println("${entry.key} ${entry.value}")
     }
 }

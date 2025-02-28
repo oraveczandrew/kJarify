@@ -30,6 +30,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.util.concurrent.Executor
 
+@Suppress("unused")
 class DexProcessor(
     private val optimizationOptions: OptimizationOptions = OptimizationOptions.PRETTY,
     private val coroutineDispatcher: CoroutineDispatcher = Dispatchers.Default,
@@ -37,7 +38,6 @@ class DexProcessor(
     private val allowErrors: Boolean = true,
 ) {
 
-    @Suppress("unused")
     @JvmOverloads
     constructor(
         optimizationOptions: OptimizationOptions = OptimizationOptions.PRETTY,
@@ -51,14 +51,20 @@ class DexProcessor(
         allowErrors = allowErrors,
     )
 
-    @JvmField
-    val classes: LinkedHashMap<String, ByteArray> = LinkedHashMap()
+    private val _classes: LinkedHashMap<String, ByteArray> = LinkedHashMap()
 
-    @JvmField
-    val errors: LinkedHashMap<String, String> = LinkedHashMap()
+    val classes: Map<String, ByteArray>
+        get() = _classes
 
-    @JvmField
-    val warnings: LinkedHashMap<String, String> = LinkedHashMap()
+    private val _warnings: LinkedHashMap<String, String> = LinkedHashMap()
+
+    val warnings: Map<String, String>
+        get() = _warnings
+
+    private val _errors: LinkedHashMap<String, String> = LinkedHashMap()
+
+    val errors: Map<String, String>
+        get() = _errors
 
     private var totalClassCount = 0
 
@@ -98,9 +104,9 @@ class DexProcessor(
         }
 
         callback.onProgress(
-            translated = classes.size,
-            warnings = errors.size,
-            errors = warnings.size,
+            translated = _classes.size,
+            warnings = _warnings.size,
+            errors = _errors.size,
             total = totalClassCount
         )
     }
@@ -109,7 +115,7 @@ class DexProcessor(
         val unicodeName = decode(dexClass.name) + ".class"
 
         resultsMutex.withLock {
-            if (classes.containsKey(unicodeName) || errors.containsKey(unicodeName)) {
+            if (_classes.containsKey(unicodeName) || _errors.containsKey(unicodeName)) {
                 addWarning(unicodeName, "Duplicate class name $unicodeName")
                 return
             }
@@ -133,21 +139,21 @@ class DexProcessor(
 
     internal suspend fun addWarning(className: String, warning: String) {
         resultsMutex.withLock {
-            warnings.put(className, warning)
+            _warnings.put(className, warning)
             callOnProgress()
         }
     }
 
     internal suspend fun addError(className: String, error: String) {
         resultsMutex.withLock {
-            errors.put(className, error)
+            _errors.put(className, error)
             callOnProgress()
         }
     }
 
     internal suspend fun addSuccess(className: String, result: ByteArray) {
         resultsMutex.withLock {
-            classes.put(className, result)
+            _classes.put(className, result)
             callOnProgress()
         }
 
@@ -155,9 +161,9 @@ class DexProcessor(
     }
 
     private fun callOnProgress() {
-        val warnings = warnings.size
-        val errors = errors.size
-        val processed = classes.size + warnings + errors
+        val warnings = _warnings.size
+        val errors = _errors.size
+        val processed = _classes.size + warnings + errors
         if (processed % 1000 == 0) {
             callback.onProgress(
                 translated = processed,
@@ -168,17 +174,17 @@ class DexProcessor(
         }
     }
 
-    interface ProcessCallBack {
-        fun onProgress(translated: Int, warnings: Int, errors: Int, total: Int) {}
+    abstract class ProcessCallBack {
+        open fun onProgress(translated: Int, warnings: Int, errors: Int, total: Int) {}
 
-        suspend fun suspendOnClassTranslated(unicodeName: String, classData: ByteArray) {
-            onClassTranslated(unicodeName, classData)
+        open suspend fun suspendOnClassTranslated(unicodeRelativePath: String, classData: ByteArray) {
+            onClassTranslated(unicodeRelativePath, classData)
         }
 
-        fun onClassTranslated(unicodeName: String, classData: ByteArray) {}
+        open fun onClassTranslated(unicodeRelativePath: String, classData: ByteArray) {}
     }
 
-    open class SysOutProcessStatusCallBack: ProcessCallBack {
+    internal open class SysOutProcessStatusCallBack: ProcessCallBack() {
 
         override fun onProgress(translated: Int, warnings: Int, errors: Int, total: Int) {
             if (translated + errors < total) {

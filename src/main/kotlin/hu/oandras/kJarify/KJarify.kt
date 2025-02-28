@@ -67,8 +67,8 @@ object KJarify {
         val dexDataList = dexReader.read(filePath = inputFile)
 
         val callback = object : DexProcessor.SysOutProcessStatusCallBack() {
-            override suspend fun suspendOnClassTranslated(unicodeName: String, classData: ByteArray) {
-                jarWriter.writeClass(unicodeName, classData)
+            override suspend fun suspendOnClassTranslated(unicodeRelativePath: String, classData: ByteArray) {
+                jarWriter.writeClass(unicodeRelativePath, classData)
             }
         }
 
