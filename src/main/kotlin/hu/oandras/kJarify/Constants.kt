@@ -15,7 +15,7 @@
  *
  */
 
-@file:Suppress("unused", "SpellCheckingInspection")
+@file:Suppress("SpellCheckingInspection")
 
 package hu.oandras.kJarify
 

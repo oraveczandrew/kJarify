@@ -22,7 +22,7 @@ internal class CopySetsMap<T> {
 
     private fun get(key: T): CopySet<T> {
         return lookup.getOrPut(key) {
-            CopySet<T>(key)
+            CopySet(key)
         }
     }
 
@@ -41,7 +41,7 @@ internal class CopySetsMap<T> {
         }
         dSet.remove(dest)
         sSet.add(dest)
-        lookup.put(dest, sSet)
+        lookup[dest] = sSet
         return true
     }
 
@@ -60,7 +60,7 @@ internal class CopySetsMap<T> {
                 v.copy()
             }
 
-            newMap.lookup.put(entry.key, copy)
+            newMap.lookup[entry.key] = copy
         }
 
         return newMap

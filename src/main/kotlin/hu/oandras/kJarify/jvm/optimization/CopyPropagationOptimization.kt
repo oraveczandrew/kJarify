@@ -24,9 +24,9 @@ import hu.oandras.kJarify.jvm.JvmInstruction
 
 internal object CopyPropagationOptimization : JvmOptimization() {
 
-    override fun optimize(irdata: IRWriter) {
-        val instructionList: List<JvmInstruction> = irdata.flatInstructions!!
-        val targetPredCounts = irdata.targetPredCounts
+    override fun optimize(irData: IRWriter) {
+        val instructionList: List<JvmInstruction> = irData.flatInstructions!!
+        val targetPredCounts = irData.targetPredCounts
         val replace: ArrayMap<JvmInstruction, List<JvmInstruction>> = ArrayMap()
 
         val singlePredInfos: ArrayMap<JvmInstruction, CopySetsMap<JvmInstruction.RegistryAccess.Key>> = ArrayMap()
@@ -36,7 +36,7 @@ internal object CopyPropagationOptimization : JvmOptimization() {
 
         instructionList.forEachElement { instr ->
             // reset all info when control flow is merged
-            if (irdata.isJumpTarget(instr)) {
+            if (irData.isJumpTarget(instr)) {
                 // try to use info if this was a single predecessor forward jump
                 current = if (prev != null && !prev.fallsThrough() && targetPredCounts[instr] == 1) {
                     singlePredInfos.getOrElse(instr) {
@@ -51,8 +51,8 @@ internal object CopyPropagationOptimization : JvmOptimization() {
                     // check if previous instr was a load
                     if (prev is JvmInstruction.RegistryAccess && !prev.store) {
                         if (!current.move(key.key, prev.key)) {
-                            replace.put(prev, emptyList())
-                            replace.put(instr, emptyList())
+                            replace[prev] = emptyList()
+                            replace[instr] = emptyList()
                         }
                     } else {
                         current.clobber(key.key)
@@ -62,26 +62,26 @@ internal object CopyPropagationOptimization : JvmOptimization() {
                     if (key.key != rootKey) {
                         assert(!replace.containsKey(instr))
                         // replace with load from root register instead
-                        replace.put(instr, listOf(
+                        replace[instr] = listOf(
                             JvmInstruction.RegistryAccess(
                                 registryId = rootKey.registryId,
                                 staticType = rootKey.staticType,
                                 store = false
                             )
-                        ))
+                        )
                     }
                 }
             } else {
                 for (target in instr.targets()) {
-                    val label: JvmInstruction.Label = irdata.labels[target]!!
+                    val label: JvmInstruction.Label = irData.labels[target]!!
                     if (targetPredCounts[label] == 1) {
-                        singlePredInfos.put(label, current.copy())
+                        singlePredInfos[label] = current.copy()
                     }
                 }
             }
             prev = instr
         }
 
-        irdata.replaceInstructions(replace)
+        irData.replaceInstructions(replace)
     }
 }

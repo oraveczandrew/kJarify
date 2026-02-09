@@ -41,7 +41,7 @@ class JVMClassWriter {
                 opts = opts
             )
         } catch (_: ClassFileLimitExceeded) {
-            println("Retrying " + cls.name + " with all optimization enabled")
+            println("Retrying " + cls.name.contentToString() + " with all optimization enabled")
 
             writeWithOptimizationOptions(
                 cls = cls,
@@ -257,7 +257,7 @@ class JVMClassWriter {
                         'F'.toInt() -> pool.floatRef((classTypeVal as ConstantValue.IntConstant).value)
                         'J'.toInt() -> pool.longRef((classTypeVal as ConstantValue.LongConstant).value)
                         'D'.toInt() -> pool.doubleRef((classTypeVal as ConstantValue.LongConstant).value)
-                        else -> error("Unknown descriptor: $descriptor")
+                        else -> error("Unknown descriptor: ${descriptor.contentToString()}")
                     }
                 }
                 else -> {
@@ -269,7 +269,7 @@ class JVMClassWriter {
                             pool.classRef((classTypeVal as ConstantValue.ByteArrayConstant).value)
                         }
                         else -> {
-                            error("Unknown descriptor: $descriptor")
+                            error("Unknown descriptor: ${descriptor.contentToString()}")
                         }
                     }
                 }

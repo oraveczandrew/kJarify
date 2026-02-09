@@ -60,7 +60,7 @@ class CodeItem(dex: DexFile, offset: Int) {
         if (triesSize > 0 && (instructionsSize and 1) != 0) {
             stream.u16() // padding
         }
-        tries = Array<TryItem>(triesSize) {
+        tries = Array(triesSize) {
             TryItem(stream)
         }
 

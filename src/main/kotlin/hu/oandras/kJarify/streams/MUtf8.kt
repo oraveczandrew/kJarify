@@ -67,7 +67,7 @@ private fun fixPairs(codes: IntIterator): IntIterator {
 
         override fun next(): Int {
             val x: Int = codes.next()
-            if (0xD800 <= x && x < 0xDC00) {
+            if (x in 0xD800 ..< 0xDC00) {
                 val high = x - 0xD800
                 val low = codes.next() - 0xDC00
                 return 0x10000 + (high shl 10) + (low and 1023)

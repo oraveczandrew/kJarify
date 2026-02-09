@@ -24,8 +24,8 @@ import hu.oandras.kJarify.jvm.JvmInstruction
 
 internal object JumpOptimization: JvmOptimization() {
 
-    override fun optimize(irdata: IRWriter) {
-        val instructionList = irdata.flatInstructions!!
+    override fun optimize(irData: IRWriter) {
+        val instructionList = irData.flatInstructions!!
         val jumpInstructions = instructionList.filterIsInstance<JvmInstruction.LazyJumpBase>()
 
         if (jumpInstructions.isEmpty()) {
@@ -41,7 +41,7 @@ internal object JumpOptimization: JvmOptimization() {
             Jumps.calcMinimumPositions(instructionList, positionMap)
 
             jumpInstructions.forEachElement { ins ->
-                if (ins.min < ins.max && ins.widenIfNecessary(irdata.labels, positionMap)) {
+                if (ins.min < ins.max && ins.widenIfNecessary(irData.labels, positionMap)) {
                     done = false
                 }
             }

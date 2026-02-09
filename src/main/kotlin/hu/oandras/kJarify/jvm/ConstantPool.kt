@@ -167,9 +167,8 @@ internal abstract class ConstantPool {
     fun dataRef(contantData: PoolData): Int {
         val tag = contantData.tag
         val d = lookup[tag]
-        val argRef = contantData
-        if (d.containsKey(argRef)) {
-            return d[argRef]
+        if (d.containsKey(contantData)) {
+            return d[contantData]
         }
         val width: Int = width(tag)
         if (width > space()) {

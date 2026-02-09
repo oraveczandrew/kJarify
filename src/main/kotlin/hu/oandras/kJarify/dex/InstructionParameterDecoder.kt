@@ -96,7 +96,7 @@ internal object InstructionParameterDecoder {
 
     private val EmptyArray: Array<DalvikInstructionParameter> = emptyArray()
 
-    private val integerParams: Array<IntegerParam> = Array<IntegerParam>(256) {
+    private val integerParams: Array<IntegerParam> = Array(256) {
         IntegerParam(it)
     }
 
@@ -156,12 +156,14 @@ internal object InstructionParameterDecoder {
         )
     }
 
+    @Suppress("unused")
     private fun p00opAAAAAAAA(w: Int, w2: Int, w3: Int): Array<DalvikInstructionParameter> {
         return arrayOf(
             integerParamOf(w2 xor (w3 shl 16))
         )
     }
 
+    @Suppress("unused")
     private fun p00opAAAABBBB(w: Int, w2: Int, w3: Int): Array<DalvikInstructionParameter> {
         return arrayOf(
             integerParamOf(w2),

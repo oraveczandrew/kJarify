@@ -25,9 +25,9 @@ import hu.oandras.kJarify.jvm.JvmInstruction.Pop2
 
 internal object UnusedRegisterRemovalOptimization: JvmOptimization() {
 
-    override fun optimize(irdata: IRWriter) {
+    override fun optimize(irData: IRWriter) {
         // Remove stores to registers that are not read from anywhere in the method
-        val instructionList: List<JvmInstruction> = irdata.flatInstructions!!
+        val instructionList: List<JvmInstruction> = irData.flatInstructions!!
         val used: MutableSet<JvmInstruction.RegistryAccess.Key> = HashSet()
         instructionList.forEachElement { instr ->
             if (instr is JvmInstruction.RegistryAccess && !instr.store) {
@@ -43,16 +43,16 @@ internal object UnusedRegisterRemovalOptimization: JvmOptimization() {
                 // if prev instruction is load or const, just remove it and the store
                 // otherwise, replace the store with a pop
                 if (prev != null && isRemovable(prev)) {
-                    replace.put(prev, emptyList())
-                    replace.put(instr, emptyList())
+                    replace[prev] = emptyList()
+                    replace[instr] = emptyList()
                 } else {
-                    replace.put(instr, listOf(if (instr.wide) Pop2() else Pop()))
+                    replace[instr] = listOf(if (instr.wide) Pop2() else Pop())
                 }
             }
             prev = instr
         }
 
-        irdata.replaceInstructions(replace)
+        irData.replaceInstructions(replace)
     }
 
     private fun isRemovable(instr: JvmInstruction): Boolean {

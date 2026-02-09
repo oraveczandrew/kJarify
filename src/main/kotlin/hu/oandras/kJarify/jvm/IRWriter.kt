@@ -197,7 +197,7 @@ class IRWriter private constructor(
 
     fun replaceInstructions(replace: Map<in JvmInstruction, List<JvmInstruction>>) {
         if (replace.isEmpty()) {
-            replace
+            return
         }
 
         val instructions = flatInstructions!!

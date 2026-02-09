@@ -447,7 +447,7 @@ abstract class JvmInstruction {
 
             this.isTable = jumpSize > tableSize
             this.noPadSize = 9 + (if (this.isTable) tableSize else jumpSize).toInt()
-            this.max = this.noPadSize.toInt() + 3
+            this.max = this.noPadSize + 3
         }
 
         override fun fallsThrough(): Boolean {
@@ -564,13 +564,13 @@ abstract class JvmInstruction {
         }
     }
 
-    class Pop(): Other(POP_BYTES)
+    class Pop : Other(POP_BYTES)
 
-    class Pop2(): Other(POP2_BYTES)
+    class Pop2 : Other(POP2_BYTES)
 
-    class Dup(): Other(DUP_BYTES)
+    class Dup : Other(DUP_BYTES)
 
-    class Dup2(): Other(DUP2_BYTES)
+    class Dup2 : Other(DUP2_BYTES)
 
     class InvokeInterface(
         op: Int,

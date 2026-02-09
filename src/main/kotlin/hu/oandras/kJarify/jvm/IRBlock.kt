@@ -173,7 +173,7 @@ class IRBlock internal constructor(
         val bytecode = if (newArrayCodes.containsKey(key)) {
             byteArrayOf_u8u8(JvmOps.NEWARRAY, newArrayCodes[key])
         } else {
-            // can be either multidim array or object array descriptor
+            // can be either multi dimension array or object array descriptor
             val typeDesc = if (
                 arrayTypeDesc[0] == '['.toInt().toByte() &&
                 arrayTypeDesc[1] == 'L'.toInt().toByte()

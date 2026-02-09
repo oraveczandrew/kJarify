@@ -52,9 +52,8 @@ internal object StoreLoadPruneOptimization: JvmOptimization() {
             // Replace Object with the actual type if known
             if (instr is JvmInstruction.RegistryAccess) {
                 val current = current
-                val regAccess = instr
-                val key = regAccess.key
-                if (regAccess.store) {
+                val key = instr.key
+                if (instr.store) {
                     val index = current.indexOfKey(key)
                     if (index >= 0) {
                         val pair = current.valueAt(index)
@@ -68,7 +67,7 @@ internal object StoreLoadPruneOptimization: JvmOptimization() {
                     current.remove(key)
                     val last = last
                     if (last != null && last.key == key) {
-                        current.put(key, Pair(last, instr))
+                        current[key] = Pair(last, instr)
                     }
                     this.last = null
                 }
@@ -78,12 +77,12 @@ internal object StoreLoadPruneOptimization: JvmOptimization() {
         }
     }
 
-    override fun optimize(irdata: IRWriter) {
+    override fun optimize(irData: IRWriter) {
         // Remove a store immediately followed by a load from the same register
         // (potentially with a label in between) if it can be proven that this
         // register isn't read again. As above, this only considers linear sections of code.
         // Must not be run before dup2ize!
-        val data: StoreLoadPruner = visitLinearCode(irdata, StoreLoadPruner())
+        val data: StoreLoadPruner = visitLinearCode(irData, StoreLoadPruner())
 
         if (data.removed.isEmpty()) {
             return
@@ -91,8 +90,8 @@ internal object StoreLoadPruneOptimization: JvmOptimization() {
 
         val replacements = HashMap<JvmInstruction, List<JvmInstruction>>()
         for (instr in data.removed) {
-            replacements.put(instr, emptyList())
+            replacements[instr] = emptyList()
         }
-        irdata.replaceInstructions(replacements)
+        irData.replaceInstructions(replacements)
     }
 }

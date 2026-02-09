@@ -27,7 +27,7 @@ class TreeListTest {
 
     @Test
     fun testSet() {
-        val t = TreeList<Int>(
+        val t = TreeList(
             defaultValue = 0,
             func = Int::and,
         )
@@ -43,7 +43,7 @@ class TreeListTest {
 
     @Test
     fun testMutated() {
-        val t = TreeList<Int>(
+        val t = TreeList(
             defaultValue = 0,
             func = Int::and,
         )
@@ -63,12 +63,12 @@ class TreeListTest {
     fun testEqualsEmpty() {
         val function: BiFunction<Int, Int, Int> = BiFunction { i1, i2 -> i1 and i2 }
 
-        val t1 = TreeList<Int>(
+        val t1 = TreeList(
             defaultValue = 0,
             func = function,
         )
 
-        val t2 = TreeList<Int>(
+        val t2 = TreeList(
             defaultValue = 0,
             func = function,
         )
@@ -78,7 +78,7 @@ class TreeListTest {
 
     @Test
     fun testEqualsCopied() {
-        val t = TreeList<Int>(
+        val t = TreeList(
             defaultValue = 0,
             func = Int::and,
         )
@@ -94,7 +94,7 @@ class TreeListTest {
 
     @Test
     fun testMerge() {
-        val t = TreeList<Int>(
+        val t = TreeList(
             defaultValue = 1,
             func = Int::and,
         )

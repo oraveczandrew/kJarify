@@ -43,16 +43,16 @@ abstract class JvmOptimization {
         }
     }
 
-    protected fun <T : Visitor> visitLinearCode(irdata: IRWriter, visitor: T): T {
+    protected fun <T : Visitor> visitLinearCode(irData: IRWriter, visitor: T): T {
         var exceptLevel = 0
-        val flatInstructions = irdata.flatInstructions!!
+        val flatInstructions = irData.flatInstructions!!
         for (i in flatInstructions.indices) {
             val instr = flatInstructions[i]
 
-            if (irdata.isExceptionStart(instr)) {
+            if (irData.isExceptionStart(instr)) {
                 exceptLevel++
                 visitor.visitExceptionRange()
-            } else if (irdata.isExceptionEnd(instr)) {
+            } else if (irData.isExceptionEnd(instr)) {
                 exceptLevel--
             }
 
@@ -60,7 +60,7 @@ abstract class JvmOptimization {
                 continue
             }
 
-            if (irdata.jumpTargets.contains(instr) || instr is JvmInstruction.LazyJumpBase || instr is JvmInstruction.Switch) {
+            if (irData.jumpTargets.contains(instr) || instr is JvmInstruction.LazyJumpBase || instr is JvmInstruction.Switch) {
                 visitor.visitJumpTargetOrBranch(instr)
             } else if (!instr.fallsThrough()) {
                 visitor.visitReturn()
@@ -72,5 +72,5 @@ abstract class JvmOptimization {
         return visitor
     }
 
-    abstract fun optimize(irdata: IRWriter)
+    abstract fun optimize(irData: IRWriter)
 }

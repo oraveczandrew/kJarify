@@ -19,7 +19,6 @@ package hu.oandras.kJarify.treeList
 
 internal fun Boolean.toInt() = if (this) 1 else 0
 
-@Suppress("KotlinConstantConditions")
 internal fun Int.toBoolean(): Boolean {
     return this == 1
 }

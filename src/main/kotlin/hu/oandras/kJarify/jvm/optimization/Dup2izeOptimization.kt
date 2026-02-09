@@ -82,7 +82,7 @@ internal object Dup2izeOptimization: JvmOptimization() {
         }
     }
 
-    override fun optimize(irdata: IRWriter) {
+    override fun optimize(irData: IRWriter) {
         // This optimization replaces narrow registers which are frequently read at
         // stack height 0 with a single read followed by the more efficient dup and
         // dup2 instructions. This asymptotically uses only half a byte per access.
@@ -95,7 +95,7 @@ internal object Dup2izeOptimization: JvmOptimization() {
         // Note that pruneStoreLoads breaks this invariant, so dup2ize must be run first.
         // Also, for simplicity, we only keep at most one such value on the stack at
         // a time (duplicated up to 4 times).
-        val instructions: List<JvmInstruction> = irdata.flatInstructions!!
+        val instructions: List<JvmInstruction> = irData.flatInstructions!!
 
         var ranges: ArrayList<UseRange> = ArrayList()
         val current: ArrayMap<RegistryAccess.Key, UseRange> = ArrayMap()
@@ -105,23 +105,22 @@ internal object Dup2izeOptimization: JvmOptimization() {
             val instr: JvmInstruction = instructions[i]
             // if not linear section of bytecode, reset everything. Exceptions are ok
             // since they clear the stack, but jumps obviously aren't.
-            if (irdata.isJumpTarget(instr) || instr is If || instr is Switch) {
+            if (irData.isJumpTarget(instr) || instr is If || instr is Switch) {
                 ranges.addAll(current.values)
                 current.clear()
             }
 
             if (instr is RegistryAccess) {
-                val regAccess = instr
-                val key = regAccess.key
-                if (!regAccess.wide) {
-                    if (regAccess.store) {
+                val key = instr.key
+                if (!instr.wide) {
+                    if (instr.store) {
                         if (current.containsKey(key)) {
                             ranges.add(current.remove(key)!!)
                         }
                     } else if (atHead) {
                         // putIfAbsent
                         current.getOrPut(key) {
-                            makeRange(regAccess)
+                            makeRange(instr)
                         }.add(i)
                     }
                 }
@@ -163,17 +162,17 @@ internal object Dup2izeOptimization: JvmOptimization() {
                     val initialOps = ArrayList<JvmInstruction>(1 + ops.size)
                     initialOps.add(instructions[pos])
                     initialOps.addAll(ops)
-                    replace.put(instructions[pos], initialOps)
+                    replace[instructions[pos]] = initialOps
                 } else {
-                    replace.put(instructions[pos], ops)
+                    replace[instructions[pos]] = ops
                 }
             }
         }
 
-        irdata.replaceInstructions(replace)
+        irData.replaceInstructions(replace)
     }
 
-    // used by writeir too
+    // used by writeIr too
     fun genDups(needed: Int, neededAfter: Int): Iterator<List<JvmInstruction>> {
         // Generate a sequence of dup and dup2 instructions to duplicate the given
         // value. This keeps up to 4 copies of the value on the stack. Thanks to dup2

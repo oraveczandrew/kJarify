@@ -100,7 +100,7 @@ class DexClass(
 
             if (valueType == 0x1c) { // ARRAY
                 val size: Int = stream.unsignedLeb128()
-                val array = Array<ConstantValue?>(size) {
+                val array = Array(size) {
                     encodedValue(dex, stream)
                 }
                 return ConstantValueArrayConstant(array)

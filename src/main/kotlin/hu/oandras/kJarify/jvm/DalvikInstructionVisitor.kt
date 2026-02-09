@@ -75,6 +75,7 @@ import hu.oandras.kJarify.jvm.Scalars.paramTypes
 import hu.oandras.kJarify.signExtend
 import hu.oandras.kJarify.typeinference.TypeInfo
 
+@Suppress("GrazieInspectionRunner")
 internal fun interface DalvikInstructionVisitor {
 
     fun invoke(
@@ -507,7 +508,6 @@ internal fun interface DalvikInstructionVisitor {
                 jumps.put(key, /*(*/value + instr.position/*) % (1 shl 32)*/)
             }
             block.switchCase(defaultPos, jumps)
-            jumps
         }
     }
 
@@ -746,7 +746,7 @@ internal fun interface DalvikInstructionVisitor {
             val descriptors: Array<ByteArray?> = calledId.getSpacedParameterTypes(isStatic)
             assert(sts.size == instr.getIntArrayArg(1).size && sts.size == descriptors.size)
 
-            for (i in 0 until sts.size) {
+            for (i in sts.indices) {
                 val st = sts[i]
                 val desc = descriptors[i]
                 val reg: Int = instr.getIntArrayArg(1)[i]

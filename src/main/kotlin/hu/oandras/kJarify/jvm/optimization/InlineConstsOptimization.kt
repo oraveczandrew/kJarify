@@ -56,7 +56,7 @@ internal object InlineConstsOptimization : JvmOptimization() {
                     if (index >= 0) {
                         notMultiUsed.add(current.valueAt(index))
                     }
-                    current.put(key, instr)
+                    current[key] = instr
                 } else {
                     val index = current.indexOfKey(key)
                     if (index >= 0) {
@@ -67,7 +67,7 @@ internal object InlineConstsOptimization : JvmOptimization() {
                         if (uses.containsKey(c)) {
                             current.remove(key)
                         } else {
-                            uses.put(c, instr)
+                            uses[c] = instr
                         }
                     }
                 }
@@ -75,9 +75,9 @@ internal object InlineConstsOptimization : JvmOptimization() {
         }
     }
 
-    override fun optimize(irdata: IRWriter) {
-        val instructions: List<JvmInstruction> = irdata.flatInstructions!!
-        val visitor = visitLinearCode(irdata, ConstInliner())
+    override fun optimize(irData: IRWriter) {
+        val instructions: List<JvmInstruction> = irData.flatInstructions!!
+        val visitor = visitLinearCode(irData, ConstInliner())
 
         val notMultiUsed = visitor.notMultiUsed
 
@@ -93,8 +93,8 @@ internal object InlineConstsOptimization : JvmOptimization() {
             val ins2 = instructions[i + 1]
 
             if (notMultiUsed.contains(ins2) && (ins1 is JvmInstruction.PrimitiveConstant || ins1 is JvmInstruction.OtherConstant)) {
-                replace.put(ins1, ArrayList())
-                replace.put(ins2, ArrayList())
+                replace[ins1] = ArrayList()
+                replace[ins2] = ArrayList()
                 if (uses.containsKey(ins2)) {
                     replace.getOrPut(uses[ins2]!!) {
                         ArrayList()
@@ -103,6 +103,6 @@ internal object InlineConstsOptimization : JvmOptimization() {
             }
         }
 
-        irdata.replaceInstructions(replace)
+        irData.replaceInstructions(replace)
     }
 }

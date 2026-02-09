@@ -66,24 +66,21 @@ internal object BytecodeAssembler {
 
         val map = ArrayMap<Method, ByteArray>(codeIRs.size)
         codeIRs.forEachElement { codeIR ->
-            map.put(
-                codeIR.method,
-                writeCodeAttributeTail(codeIR, opts)
-            )
+            map[codeIR.method] = writeCodeAttributeTail(codeIR, opts)
         }
         return map
     }
 
     @JvmStatic
-    private fun writeCodeAttributeTail(irdata: IRWriter, opts: OptimizationOptions): ByteArray {
-        JumpOptimization.optimize(irdata)
-        val byteCodeResult = createBytecode(irdata, opts)
+    private fun writeCodeAttributeTail(irData: IRWriter, opts: OptimizationOptions): ByteArray {
+        JumpOptimization.optimize(irData)
+        val byteCodeResult = createBytecode(irData, opts)
         val bytecodeChunks = byteCodeResult.bytecodeChunks
         val excepts = byteCodeResult.packedExcepts
 
         return withWriter { stream ->
             stream.u16(300) // stack
-            stream.u16(irdata.registryCount) // locals
+            stream.u16(irData.registryCount) // locals
 
             stream.u32(bytecodeChunks.sumOf { it.size })
             bytecodeChunks.forEachElement(stream::write)
@@ -99,15 +96,15 @@ internal object BytecodeAssembler {
 
     @JvmStatic
     @Throws(ClassFileLimitExceeded::class)
-    private fun createBytecode(irdata: IRWriter, opts: OptimizationOptions): ByteCodeResult {
-        val instructionsList = irdata.flatInstructions!!
+    private fun createBytecode(irData: IRWriter, opts: OptimizationOptions): ByteCodeResult {
+        val instructionsList = irData.flatInstructions!!
         val positionDictionary = MutableObjectIntMap<JvmInstruction>(instructionsList.size)
         val endPos = calcMinimumPositions(instructionsList, positionDictionary)
         val bytecodeChunks = ArrayList<ByteArray>(instructionsList.size)
 
         instructionsList.forEachElement { ins ->
             if (ins is LazyJumpBase || ins is Switch) {
-                ins.calculateBytecode(positionDictionary, irdata.labels)
+                ins.calculateBytecode(positionDictionary, irData.labels)
             }
 
             val bytecode = ins.bytecode
@@ -126,14 +123,14 @@ internal object BytecodeAssembler {
             }
         }
 
-        val exceptions = irdata.exceptions
+        val exceptions = irData.exceptions
         val exceptionsSize = exceptions.size
         val packedExcepts = if (exceptionsSize > 0) {
             val prevInstrMap = ArrayMap<JvmInstruction, JvmInstruction>(instructionsList.size / 2)
             for (i in 1 until instructionsList.size) {
                 val instruction = instructionsList[i]
                 if (instruction is Label) {
-                    prevInstrMap.put(instruction, instructionsList[i - 1])
+                    prevInstrMap[instruction] = instructionsList[i - 1]
                 }
             }
 

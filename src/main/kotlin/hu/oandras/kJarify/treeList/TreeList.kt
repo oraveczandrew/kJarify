@@ -20,13 +20,13 @@ package hu.oandras.kJarify.treeList
 import java.util.function.BiFunction
 import kotlin.math.min
 
-
+@Suppress("DuplicatedCode")
 internal class TreeList<T>(
     private val defaultValue: T,
     private val func: BiFunction<T, T, T>,
     data: TreeListSub<T>? = null
 ) {
-    private var data: TreeListSub<T> = data ?: TreeListSub<T>(defaultValue)
+    private var data: TreeListSub<T> = data ?: TreeListSub(defaultValue)
 
     operator fun get(i: Int): T {
         return data.get(i)
@@ -77,7 +77,7 @@ internal class TreeList<T>(
 
         constructor(defaultValue: T): this(
             defaultValue,
-            direct = Array<Any>(SIZE) {
+            direct = Array(SIZE) {
                 defaultValue as Any
             } as Array<T>,
             children = arrayOfNulls(SPLIT) // Subtrees allocated lazily
@@ -94,13 +94,9 @@ internal class TreeList<T>(
 
             i -= SIZE
             val childIndex = i % SPLIT
-            i = i / SPLIT
+            i /= SPLIT
 
-            val child = children[childIndex]
-
-            if (child == null) {
-                return defaultValue
-            }
+            val child = children[childIndex] ?: return defaultValue
 
             return child.get(i)
         }
@@ -122,14 +118,14 @@ internal class TreeList<T>(
 
             i -= SIZE
             val childIndex = i % SPLIT
-            i = i / SPLIT
+            i /= SPLIT
             var child = children[childIndex]
 
             if (child == null) {
                 if (value == defaultValue) {
                     return this
                 }
-                child = TreeListSub<T>(defaultValue).set(i, value)
+                child = TreeListSub(defaultValue).set(i, value)
             } else {
                 if (value == child.get(i)) {
                     return this
@@ -157,8 +153,8 @@ internal class TreeList<T>(
 
         override fun hashCode(): Int {
             var result = defaultValue.hashCode()
-            result = 31 * result + direct.hashCode()
-            result = 31 * result + children.hashCode()
+            result = 31 * result + direct.contentHashCode()
+            result = 31 * result + children.contentHashCode()
             return result
         }
 
@@ -205,7 +201,7 @@ internal class TreeList<T>(
                         return left
                     }
 
-                    return TreeListSub<T>(defaultValue = defaultVal, direct = direct, children = children)
+                    return TreeListSub(defaultValue = defaultVal, direct = direct, children = children)
                 } else {
                     val rightDirect = right.direct
 
@@ -232,7 +228,7 @@ internal class TreeList<T>(
                         return right
                     }
 
-                    return TreeListSub<T>(defaultValue = defaultVal, direct = direct, children = children)
+                    return TreeListSub(defaultValue = defaultVal, direct = direct, children = children)
                 }
             }
         }

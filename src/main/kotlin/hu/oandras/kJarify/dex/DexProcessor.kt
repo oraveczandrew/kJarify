@@ -139,21 +139,21 @@ class DexProcessor(
 
     internal suspend fun addWarning(className: String, warning: String) {
         resultsMutex.withLock {
-            _warnings.put(className, warning)
+            _warnings[className] = warning
             callOnProgress()
         }
     }
 
     internal suspend fun addError(className: String, error: String) {
         resultsMutex.withLock {
-            _errors.put(className, error)
+            _errors[className] = error
             callOnProgress()
         }
     }
 
     internal suspend fun addSuccess(className: String, result: ByteArray) {
         resultsMutex.withLock {
-            _classes.put(className, result)
+            _classes[className] = result
             callOnProgress()
         }
 

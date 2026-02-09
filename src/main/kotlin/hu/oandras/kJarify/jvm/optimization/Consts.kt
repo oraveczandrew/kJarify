@@ -42,14 +42,14 @@ internal object Consts {
                 if (ins is PrimitiveConstant) {
                     val bytecode = ins.bytecode
                     val key = ins.getConstantPoolData()
-                    altLens.put(key, bytecode.size)
+                    altLens[key] = bytecode.size
                     if (isWide(ins.staticType)) {
                         if (bytecode.size > 3) {
-                            widePairs.put(key, widePairs.getOrDefault(key, 0) + 1)
+                            widePairs[key] = widePairs.getOrDefault(key, 0) + 1
                         }
                     } else {
                         if (bytecode.size > 2) {
-                            narrowPairs.put(key, narrowPairs.getOrDefault(key, 0) + 1)
+                            narrowPairs[key] = narrowPairs.getOrDefault(key, 0) + 1
                         }
                     }
                 }
@@ -85,13 +85,13 @@ internal object Consts {
         for (entry in narrowPairs.entries) {
             val p = entry.key
             val count: Int = entry.value
-            scores.put(p, (altLens[p]!! - 3) * count)
+            scores[p] = (altLens[p]!! - 3) * count
         }
 
         for (entry in widePairs.entries) {
             val p = entry.key
             val count: Int = entry.value
-            scores.put(p, (altLens[p]!! - 3) * count)
+            scores[p] = (altLens[p]!! - 3) * count
         }
 
         // sort by score

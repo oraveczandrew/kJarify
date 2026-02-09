@@ -31,13 +31,13 @@ internal object Registers {
 
     // Allocate registers to JVM registers on a first come, first served basis
     // For simplicity, parameter registers are preserved as is
-    fun simpleAllocateRegisters(irdata: IRWriter) {
-        val instructionList: List<JvmInstruction> = irdata.flatInstructions!!
+    fun simpleAllocateRegisters(irData: IRWriter) {
+        val instructionList: List<JvmInstruction> = irData.flatInstructions!!
         val registryMap: ArrayMap<RegistryAccess.Key?, Int> = ArrayMap()
-        val initialArgs = irdata.initialArgs!!
+        val initialArgs = irData.initialArgs!!
 
         for (i in initialArgs.indices) {
-            registryMap.put(initialArgs[i], i)
+            registryMap[initialArgs[i]] = i
         }
 
         var nextRegistry = initialArgs.size
@@ -59,18 +59,18 @@ internal object Registers {
             }
         }
 
-        irdata.registryCount = nextRegistry
+        irData.registryCount = nextRegistry
     }
 
-    fun sortAllocateRegisters(irdata: IRWriter) {
-        val initialArgs = irdata.initialArgs!!
-        val instructionList: MutableList<JvmInstruction> = irdata.flatInstructions!!
+    fun sortAllocateRegisters(irData: IRWriter) {
+        val initialArgs = irData.initialArgs!!
+        val instructionList: MutableList<JvmInstruction> = irData.flatInstructions!!
 
         val useCounts: MutableMap<RegistryAccess.Key, Int> = HashMap()
         instructionList.forEachElement { instr ->
             if (instr is RegistryAccess) {
                 val key = instr.key
-                useCounts.put(key, useCounts.getOrDefault(key, 0) + 1)
+                useCounts[key] = useCounts.getOrDefault(key, 0) + 1
             }
         }
 
@@ -110,25 +110,25 @@ internal object Registers {
                         val store = RegistryAccess(target.registryId, target.staticType, true)
                         instructionList.add(0, load)
                         instructionList.add(1, store)
-                        irdata.flatInstructions = instructionList
+                        irData.flatInstructions = instructionList
                         break
                     }
                 }
             }
         }
 
-        irdata.registryCount = regs.size
-        val regmap: MutableMap<RegistryAccess.Key?, Int> = HashMap()
+        irData.registryCount = regs.size
+        val regMap: MutableMap<RegistryAccess.Key?, Int> = HashMap()
         for (i in regs.indices) {
             val reg = regs[i]
             if (reg != null) {
-                regmap.put(reg, i)
+                regMap[reg] = i
             }
         }
 
         instructionList.forEachElement { instr ->
             if (instr.bytecode == null && instr is RegistryAccess) {
-                instr.calculateBytecode(regmap[instr.key]!!)
+                instr.calculateBytecode(regMap[instr.key]!!)
             }
         }
     }

@@ -93,12 +93,12 @@ class DexFile(
     }
 
     fun type(i: Int): ByteArray {
-        var uI = i.toUInt()
+        val uI = i.toUInt()
         if (0u <= uI && uI < NO_INDEX.toUInt()) {
             val strIndex = stream(typeIds.offset + i * 4).u32()
             return string(strIndex)
         }
-        return error("Unsupported type!")
+        error("Unsupported type!")
     }
 
     @Suppress("DEPRECATION")
@@ -162,11 +162,11 @@ class DexFile(
         }
 
         return if (parseClsDesc) {
-            Array<ByteArray>(indexes.size) {
+            Array(indexes.size) {
                 classType(indexes[it])
             }
         } else {
-            Array<ByteArray>(indexes.size) {
+            Array(indexes.size) {
                 type(indexes[it])
             }
         }

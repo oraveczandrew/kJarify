@@ -34,7 +34,7 @@ class TestProcess {
 
     // Test 6 and 7 has invalid examples, so they not pass
     @ParameterizedTest
-    @ValueSource(ints = [1, 2, 3, 4, 5, /*6, 7*/])
+    @ValueSource(ints = [1, 2, 3, 4, 5 /*, 6, 7*/])
     fun test1(n: Int) {
         val dexData = this::class.java.getResourceAsStream("/test$n/classes.dex")!!.readAndClose()
 
@@ -47,10 +47,7 @@ class TestProcess {
         dex.classes.forEach {
             val decodedName = decode(it.name)
 
-            byteCodes.put(
-                decodedName.replace("/", "."),
-                jvmClassWriter.toClassFile(it, OptimizationOptions.PRETTY)
-            )
+            byteCodes[decodedName.replace("/", ".")] = jvmClassWriter.toClassFile(it, OptimizationOptions.PRETTY)
         }
 
         val classLoader = object : ClassLoader() {
@@ -83,7 +80,7 @@ class TestProcess {
         val file = File(expectedTextFilePath)
         val expectedText = file.readText()
 
-        val lines = expectedText.split("\r\n").map { it.trim { it < ' ' } }
+        val lines = expectedText.split("\r\n").map { line -> line.trim { it < ' ' } }
 
         assertEquals(lines.size, givenOutput.size)
 

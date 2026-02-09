@@ -55,7 +55,7 @@ internal class CopySet<T> private constructor(
     }
 
     fun copy(): CopySet<T> {
-        return CopySet<T>(
+        return CopySet(
             root = root,
             set = if (set.isNotEmpty()) ArraySet(set) else ArraySet(),
             q = if (q.isNotEmpty()) LinkedList(q) else LinkedList(),

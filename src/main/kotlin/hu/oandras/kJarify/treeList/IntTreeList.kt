@@ -19,7 +19,7 @@ package hu.oandras.kJarify.treeList
 
 import kotlin.math.min
 
-
+@Suppress("DuplicatedCode")
 internal class IntTreeList private constructor(
     private val defaultValue: Int,
     private val func: IntIntFunc,
@@ -103,13 +103,9 @@ internal class IntTreeList private constructor(
 
             i -= SIZE
             val childIndex = i % SPLIT
-            i = i / SPLIT
+            i /= SPLIT
 
-            val child = children[childIndex]
-
-            if (child == null) {
-                return defaultValue
-            }
+            val child = children[childIndex] ?: return defaultValue
 
             return child.get(i)
         }
@@ -131,7 +127,7 @@ internal class IntTreeList private constructor(
 
             i -= SIZE
             val childIndex = i % SPLIT
-            i = i / SPLIT
+            i /= SPLIT
             var child = children[childIndex]
 
             if (child == null) {
@@ -166,8 +162,8 @@ internal class IntTreeList private constructor(
 
         override fun hashCode(): Int {
             var result = defaultValue.hashCode()
-            result = 31 * result + direct.hashCode()
-            result = 31 * result + children.hashCode()
+            result = 31 * result + direct.contentHashCode()
+            result = 31 * result + children.contentHashCode()
             return result
         }
 

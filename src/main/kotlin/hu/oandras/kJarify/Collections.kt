@@ -80,7 +80,7 @@ internal fun IntList.sum(): Int {
 }
 
 internal inline fun <T> List<T>.forEachElement(r: (T) -> Unit) {
-    for (i in 0 until size) {
+    for (i in indices) {
         r.invoke(this[i])
     }
 }
