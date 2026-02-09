@@ -1,7 +1,7 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
-    kotlin("jvm") version "2.1.10"
+    kotlin("jvm") version "2.3.10"
     java
 }
 
@@ -15,16 +15,16 @@ repositories.apply {
 
 dependencies.apply {
     testImplementation(kotlin("test"))
-    implementation("commons-cli:commons-cli:1.9.0")
-    implementation("androidx.collection:collection:1.4.5")
+    implementation("commons-cli:commons-cli:1.11.0")
+    implementation("androidx.collection:collection:1.5.0")
 
-    val coroutinesVersion = "1.10.1"
+    val coroutinesVersion = "1.10.2"
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutinesVersion")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:$coroutinesVersion")
 
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:$coroutinesVersion")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test-jvm:$coroutinesVersion")
-    testImplementation("org.junit.jupiter:junit-jupiter-params:5.10.0")
+    testImplementation("org.junit.jupiter:junit-jupiter-params:5.14.2")
 }
 
 tasks.register<Jar>("fatJar") {
@@ -50,12 +50,12 @@ tasks.test {
 }
 
 kotlin.compilerOptions.apply {
-    jvmTarget.set(JvmTarget.JVM_1_8)
+    jvmTarget.set(JvmTarget.JVM_11)
 }
 
 java.apply {
-    sourceCompatibility = JavaVersion.VERSION_1_8
-    targetCompatibility = JavaVersion.VERSION_1_8
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
 }
 
 kotlin.apply {
