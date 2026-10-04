@@ -49,6 +49,27 @@ tasks.test {
     useJUnitPlatform()
 }
 
+// Profiler: production parity run (assertions OFF, like `java -jar`).
+// Usage: ./gradlew profiler
+tasks.register<Test>("profiler") {
+    testClassesDirs = sourceSets["test"].output.classesDirs
+    classpath = sourceSets["test"].runtimeClasspath
+    useJUnitPlatform()
+    enableAssertions = false
+    filter { includeTestsMatching("hu.oandras.kJarify.ProfilerTest") }
+    // JFR dump for analysis: ./gradlew profiler -Pjfr
+    if (project.hasProperty("jfr")) {
+        jvmArgs(
+            "-XX:+FlightRecorder",
+            "-XX:StartFlightRecording=disk=true,dumponexit=true,filename=build/profiler.jfr,settings=profile",
+        )
+    }
+    testLogging {
+        showStandardStreams = true
+        exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+    }
+}
+
 kotlin.compilerOptions.apply {
     jvmTarget.set(JvmTarget.JVM_11)
 }

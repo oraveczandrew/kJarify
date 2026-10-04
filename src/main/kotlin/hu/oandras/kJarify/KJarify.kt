@@ -78,6 +78,10 @@ object KJarify {
             callback = callback,
         )
 
-        processor.suspendProcess(dexDataList)
+        try {
+            processor.suspendProcess(dexDataList)
+        } finally {
+            jarWriter.closeSuspend()
+        }
     }
 }

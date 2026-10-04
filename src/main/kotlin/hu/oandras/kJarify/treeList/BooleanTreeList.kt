@@ -58,9 +58,9 @@ internal class BooleanTreeList private constructor(
         )
     }
 
-    fun merge(other: BooleanTreeList) {
+    fun merge(other: BooleanTreeList): Boolean {
         require(func === other.func) { "Functions must be the same" }
-        intTreeList.merge(other.intTreeList)
+        return intTreeList.merge(other.intTreeList)
     }
 
     override fun equals(other: Any?): Boolean {

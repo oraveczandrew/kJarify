@@ -64,4 +64,10 @@ class JarOutputStream private constructor(
             closeEntry()
         }
     }
+
+    suspend fun closeSuspend() {
+        mutex.withLock {
+            close()
+        }
+    }
 }

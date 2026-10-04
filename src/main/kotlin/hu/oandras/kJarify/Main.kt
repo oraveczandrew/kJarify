@@ -64,34 +64,38 @@ internal suspend fun mainImpl(args: Array<String>) {
             compressionLevel = Deflater.DEFAULT_COMPRESSION,
         )
 
-        val dexReader = if (inputFile.endsWith(".apk", ignoreCase = true)) {
-            DexReader.ApkDexFileReader
-        } else {
-            DexReader.SimpleDexFileReader
-        }
-
-        val dexDataList = dexReader.read(filePath = inputFile)
-
-        val callback = object : DexProcessor.SysOutProcessStatusCallBack() {
-            override suspend fun suspendOnClassTranslated(unicodeRelativePath: String, classData: ByteArray) {
-                jarWriter.writeClass(unicodeRelativePath, classData)
+        try {
+            val dexReader = if (inputFile.endsWith(".apk", ignoreCase = true)) {
+                DexReader.ApkDexFileReader
+            } else {
+                DexReader.SimpleDexFileReader
             }
+
+            val dexDataList = dexReader.read(filePath = inputFile)
+
+            val callback = object : DexProcessor.SysOutProcessStatusCallBack() {
+                override suspend fun suspendOnClassTranslated(unicodeRelativePath: String, classData: ByteArray) {
+                    jarWriter.writeClass(unicodeRelativePath, classData)
+                }
+            }
+
+            val processor = DexProcessor(
+                optimizationOptions = OptimizationOptions(options),
+                coroutineDispatcher = Dispatchers.Default,
+                callback = callback,
+            )
+            processor.suspendProcess(dexDataList)
+
+            printErrors(processor.errors)
+
+            println("Output written to $outputName")
+
+            val end = System.currentTimeMillis()
+            val diff = end - start
+            println("Processed under $diff ms")
+        } finally {
+            jarWriter.closeSuspend()
         }
-
-        val processor = DexProcessor(
-            optimizationOptions = OptimizationOptions(options),
-            coroutineDispatcher = Dispatchers.Default,
-            callback = callback,
-        )
-        processor.suspendProcess(dexDataList)
-
-        printErrors(processor.errors)
-
-        println("Output written to $outputName")
-
-        val end = System.currentTimeMillis()
-        val diff = end - start
-        println("Processed under $diff ms")
     } catch (_: IOException) {
         println("Error, output file already exists and --force was not specified.")
         println("To overwrite the output file, pass -f or --force.")

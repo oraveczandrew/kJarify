@@ -18,7 +18,6 @@
 package hu.oandras.kJarify.treeList
 
 import java.util.function.BiFunction
-import kotlin.math.min
 
 @Suppress("DuplicatedCode")
 internal class TreeList<T>(
@@ -40,9 +39,14 @@ internal class TreeList<T>(
         return TreeList(defaultValue, func, data)
     }
 
-    fun merge(other: TreeList<T>) {
+    fun merge(other: TreeList<T>): Boolean {
         require(func === other.func) { "Functions must be the same" }
-        data = TreeListSub.merge(data, other.data, func)!!
+        val merged = TreeListSub.merge(data, other.data, func)!!
+        if (merged === data) {
+            return false
+        }
+        data = merged
+        return true
     }
 
     override fun equals(other: Any?): Boolean {
@@ -165,71 +169,113 @@ internal class TreeList<T>(
             fun<T> merge(left: TreeListSub<T>?, right: TreeListSub<T>?, func: BiFunction<T, T, T>): TreeListSub<T>? {
                 // Effectively computes [func(x, y) for x, y in zip(left, right)]
                 // Assume func(x, x) == x
-                if (left == right) {
+                // Single pass, allocates only on first actual difference (allocate-on-write).
+                if (left === right) {
+                    return left
+                }
+                if (left == null) {
+                    return mergeWithDefault(right, func)
+                }
+                if (right == null) {
+                    return mergeWithDefault(left, func)
+                }
+
+                val defaultVal = left.defaultValue
+                val leftDirect = left.direct
+                val rightDirect = right.direct
+
+                var direct: Array<T>? = null
+                for (i in 0 until SIZE) {
+                    val m = func.apply(leftDirect[i], rightDirect[i])
+                    if (m != leftDirect[i]) {
+                        var d = direct
+                        if (d == null) {
+                            d = leftDirect.clone()
+                            direct = d
+                        }
+                        d[i] = m
+                    }
+                }
+
+                val leftChildren = left.children
+                val rightChildren = right.children
+
+                var children: Array<TreeListSub<T>?>? = null
+                for (i in 0 until SPLIT) {
+                    val merged = merge(leftChildren[i], rightChildren[i], func)
+                    if (merged !== leftChildren[i]) {
+                        var c = children
+                        if (c == null) {
+                            c = leftChildren.clone()
+                            children = c
+                        }
+                        c[i] = merged
+                    }
+                }
+
+                val d = direct
+                val c = children
+                if (d == null && c == null) {
                     return left
                 }
 
-                var left = left
-                var right = right
+                val newDirect = d ?: leftDirect
+                val newChildren = c ?: leftChildren
 
-                if (left == null) {
-                    val temp = left
-                    left = right
-                    right = temp
+                if (newDirect.contentEquals(rightDirect) && newChildren.contentEquals(rightChildren)) {
+                    return right
                 }
 
-                val defaultVal = left!!.defaultValue
-                val leftDirect = left.direct
-                val leftChildren = left.children
+                return TreeListSub(defaultValue = defaultVal, direct = newDirect, children = newChildren)
+            }
 
-                if (right == null) {
-                    val direct: Array<T> = arrayOfNulls<Any>(SIZE) as Array<T>
-                    for (i in leftDirect.indices) {
-                        direct[i] = func.apply(leftDirect[i], defaultVal)
-                    }
-
-                    val children: Array<TreeListSub<T>?> = arrayOfNulls(SPLIT)
-                    for (i in leftChildren.indices) {
-                        val child = leftChildren[i]
-                        val merged = merge(child, null, func)
-                        if (merged != null) {
-                            children[i] = merged
-                        }
-                    }
-
-                    if (direct.contentEquals(leftDirect) && children.contentEquals(leftChildren)) {
-                        return left
-                    }
-
-                    return TreeListSub(defaultValue = defaultVal, direct = direct, children = children)
-                } else {
-                    val rightDirect = right.direct
-
-                    val direct: Array<T> = arrayOfNulls<Any>(SIZE) as Array<T>
-                    for (i in 0 until min(leftDirect.size, rightDirect.size)) {
-                        direct[i] = func.apply(leftDirect[i], rightDirect[i])
-                    }
-
-                    val rightChildren = right.children
-
-                    val children: Array<TreeListSub<T>?> = arrayOfNulls(SPLIT)
-                    for (i in 0 until min(leftChildren.size, rightChildren.size)) {
-                        val merged = merge(leftChildren[i], rightChildren[i], func)
-                        if (merged != null) {
-                            children[i] = merged
-                        }
-                    }
-
-                    if (direct.contentEquals(leftDirect) && children.contentEquals(leftChildren)) {
-                        return left
-                    }
-
-                    if (direct.contentEquals(rightDirect) && children.contentEquals(rightChildren)) {
-                        return right
-                    }
-
-                    return TreeListSub(defaultValue = defaultVal, direct = direct, children = children)
+            private fun<T> mergeWithDefault(node: TreeListSub<T>?, func: BiFunction<T, T, T>): TreeListSub<T>? {
+                if (node == null) {
+                    return null
                 }
+
+                val defaultVal = node.defaultValue
+                val nodeDirect = node.direct
+
+                var direct: Array<T>? = null
+                for (i in 0 until SIZE) {
+                    val m = func.apply(nodeDirect[i], defaultVal)
+                    if (m != nodeDirect[i]) {
+                        var d = direct
+                        if (d == null) {
+                            d = nodeDirect.clone()
+                            direct = d
+                        }
+                        d[i] = m
+                    }
+                }
+
+                val nodeChildren = node.children
+
+                var children: Array<TreeListSub<T>?>? = null
+                for (i in 0 until SPLIT) {
+                    val merged = mergeWithDefault(nodeChildren[i], func)
+                    if (merged !== nodeChildren[i]) {
+                        var c = children
+                        if (c == null) {
+                            c = nodeChildren.clone()
+                            children = c
+                        }
+                        c[i] = merged
+                    }
+                }
+
+                val d = direct
+                val c = children
+                if (d == null && c == null) {
+                    return node
+                }
+
+                return TreeListSub(
+                    defaultValue = defaultVal,
+                    direct = d ?: nodeDirect,
+                    children = c ?: nodeChildren,
+                )
             }
         }
     }

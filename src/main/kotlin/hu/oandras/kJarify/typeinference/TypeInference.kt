@@ -35,10 +35,12 @@ internal object TypeInference {
     @JvmStatic
     private fun mergeTypes(old: TypeInfo, newTypeInfo: TypeInfo): TypeInfo {
         val temp = old.copy()
-        temp.prims.merge(newTypeInfo.prims)
-        temp.arrays.merge(newTypeInfo.arrays)
-        temp.tainted.merge(newTypeInfo.tainted)
-        return if (old.isSame(temp)) old else temp
+        // Each merge reports whether it changed anything, so the extra
+        // deep-equality pass (old.isSame(temp)) is no longer needed.
+        var changed = temp.prims.merge(newTypeInfo.prims)
+        changed = temp.arrays.merge(newTypeInfo.arrays) || changed
+        changed = temp.tainted.merge(newTypeInfo.tainted) || changed
+        return if (changed) temp else old
     }
 
     @JvmStatic
