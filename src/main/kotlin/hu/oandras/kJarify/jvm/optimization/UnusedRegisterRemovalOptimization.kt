@@ -17,6 +17,8 @@
 
 package hu.oandras.kJarify.jvm.optimization
 
+import androidx.collection.ArrayMap
+import androidx.collection.ArraySet
 import hu.oandras.kJarify.forEachElement
 import hu.oandras.kJarify.jvm.IRWriter
 import hu.oandras.kJarify.jvm.JvmInstruction
@@ -28,31 +30,46 @@ internal object UnusedRegisterRemovalOptimization: JvmOptimization() {
     override fun optimize(irData: IRWriter) {
         // Remove stores to registers that are not read from anywhere in the method
         val instructionList: List<JvmInstruction> = irData.flatInstructions!!
-        val used: MutableSet<JvmInstruction.RegistryAccess.Key> = HashSet()
+
+        val replace: ArrayMap<JvmInstruction, List<JvmInstruction>>? = findReplacements(instructionList)
+        if (replace != null) {
+            irData.replaceInstructions(replace)
+        }
+    }
+
+    private fun findReplacements(
+        instructionList: List<JvmInstruction>
+    ): ArrayMap<JvmInstruction, List<JvmInstruction>>? {
+        // Remove stores to registers that are not read from anywhere in the method
+        val used: MutableSet<JvmInstruction.RegistryAccess.Key> = ArraySet()
         instructionList.forEachElement { instr ->
             if (instr is JvmInstruction.RegistryAccess && !instr.store) {
                 used.add(instr.key)
             }
         }
 
-        val replace: java.util.HashMap<JvmInstruction, List<JvmInstruction>> = HashMap()
+        // Lazily allocated: most methods need no replacement at all
+        var replace: ArrayMap<JvmInstruction, List<JvmInstruction>>? = null
         var prev: JvmInstruction? = null
         instructionList.forEachElement { instr ->
             if (instr is JvmInstruction.RegistryAccess && !used.contains(instr.key)) {
                 assert(instr.store)
                 // if prev instruction is load or const, just remove it and the store
                 // otherwise, replace the store with a pop
+                val map = replace ?: ArrayMap<JvmInstruction, List<JvmInstruction>>().also {
+                    replace = it
+                }
                 if (prev != null && isRemovable(prev)) {
-                    replace[prev] = emptyList()
-                    replace[instr] = emptyList()
+                    map[prev] = emptyList()
+                    map[instr] = emptyList()
                 } else {
-                    replace[instr] = listOf(if (instr.wide) Pop2() else Pop())
+                    map[instr] = listOf(if (instr.wide) Pop2() else Pop())
                 }
             }
             prev = instr
         }
 
-        irData.replaceInstructions(replace)
+        return replace
     }
 
     private fun isRemovable(instr: JvmInstruction): Boolean {
