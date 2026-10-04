@@ -17,7 +17,6 @@
 
 package hu.oandras.kJarify.jvm.optimization
 
-import androidx.collection.MutableObjectIntMap
 import hu.oandras.kJarify.forEachElement
 import hu.oandras.kJarify.jvm.IRWriter
 import hu.oandras.kJarify.jvm.JvmInstruction
@@ -32,16 +31,13 @@ internal object JumpOptimization: JvmOptimization() {
             return
         }
 
-        val positionMap = MutableObjectIntMap<JvmInstruction>(instructionList.size)
-
         while (true) {
             var done = true
 
-            positionMap.clear()
-            Jumps.calcMinimumPositions(instructionList, positionMap)
+            Jumps.calcMinimumPositions(instructionList)
 
             jumpInstructions.forEachElement { ins ->
-                if (ins.min < ins.max && ins.widenIfNecessary(irData.labels, positionMap)) {
+                if (ins.min < ins.max && ins.widenIfNecessary(irData.labels)) {
                     done = false
                 }
             }

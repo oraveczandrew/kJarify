@@ -19,7 +19,6 @@
 
 package hu.oandras.kJarify.jvm.optimization
 
-import androidx.collection.MutableObjectIntMap
 import hu.oandras.kJarify.forEachElement
 import hu.oandras.kJarify.jvm.JvmInstruction
 import hu.oandras.kJarify.jvm.JvmInstruction.LazyJumpBase
@@ -28,13 +27,11 @@ import hu.oandras.kJarify.jvm.JvmInstruction.Switch
 internal object Jumps {
 
     @JvmStatic
-    fun calcMinimumPositions(instructions: List<JvmInstruction>, outMap: MutableObjectIntMap<JvmInstruction>): Int {
-        assert(outMap.isEmpty())
-
+    fun calcMinimumPositions(instructions: List<JvmInstruction>): Int {
         var pos = 0
 
         instructions.forEachElement { ins ->
-            outMap.put(ins, pos)
+            ins.bytecodeOffset = pos
 
             when (ins) {
                 is LazyJumpBase -> {

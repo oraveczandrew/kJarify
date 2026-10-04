@@ -18,7 +18,6 @@
 package hu.oandras.kJarify.jvm
 
 import androidx.collection.ArrayMap
-import androidx.collection.MutableObjectIntMap
 import hu.oandras.kJarify.CODE
 import hu.oandras.kJarify.byteArrayOf_u16u16u16u16
 import hu.oandras.kJarify.dex.Method
@@ -98,13 +97,12 @@ internal object BytecodeAssembler {
     @Throws(ClassFileLimitExceeded::class)
     private fun createBytecode(irData: IRWriter, opts: OptimizationOptions): ByteCodeResult {
         val instructionsList = irData.flatInstructions!!
-        val positionDictionary = MutableObjectIntMap<JvmInstruction>(instructionsList.size)
-        val endPos = calcMinimumPositions(instructionsList, positionDictionary)
+        val endPos = calcMinimumPositions(instructionsList)
         val bytecodeChunks = ArrayList<ByteArray>(instructionsList.size)
 
         instructionsList.forEachElement { ins ->
             if (ins is LazyJumpBase || ins is Switch) {
-                ins.calculateBytecode(positionDictionary, irData.labels)
+                ins.calculateBytecode(irData.labels)
             }
 
             val bytecode = ins.bytecode
@@ -138,9 +136,9 @@ internal object BytecodeAssembler {
             for (i in 0 until exceptionsSize) {
                 val ex = exceptions[i]
                 val s = prevInstrMap[ex.start]!!
-                val sOffset: Int = positionDictionary[s]
-                val eOffset: Int = positionDictionary[ex.end]
-                val hOffset: Int = positionDictionary[ex.target]
+                val sOffset: Int = s.bytecodeOffset
+                val eOffset: Int = ex.end.bytecodeOffset
+                val hOffset: Int = ex.target.bytecodeOffset
                 assert(sOffset <= eOffset)
                 if (sOffset < eOffset) {
                     packedExcepts.add(

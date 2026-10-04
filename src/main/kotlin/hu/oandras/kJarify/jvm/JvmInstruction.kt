@@ -56,6 +56,11 @@ import hu.oandras.kJarify.streams.withWriter
 
 abstract class JvmInstruction {
 
+    // Bytecode offset assigned by Jumps.calcMinimumPositions. Stored on the
+    // instruction itself so jump offset calculation needs no lookup map.
+    @JvmField
+    var bytecodeOffset: Int = 0
+
     open val bytecode: ByteArray?
         get() = null
 
@@ -72,7 +77,7 @@ abstract class JvmInstruction {
 
     open fun targets(): IntArray = EmptyIntArray
 
-    open fun calculateBytecode(positionMap: ObjectIntMap<JvmInstruction>, labels: IntObjectMap<out JvmInstruction>) {
+    open fun calculateBytecode(labels: IntObjectMap<out JvmInstruction>) {
         error("Unsupported")
     }
 
@@ -314,8 +319,8 @@ abstract class JvmInstruction {
 
         override fun targets(): IntArray = targets
 
-        fun widenIfNecessary(labels: IntObjectMap<Label>, positionMap: ObjectIntMap<JvmInstruction>): Boolean {
-            val offset = positionMap[labels[target]!!] - positionMap[this]
+        fun widenIfNecessary(labels: IntObjectMap<Label>): Boolean {
+            val offset = labels[target]!!.bytecodeOffset - bytecodeOffset
             return if (offset < -32768 || offset >= 32768) {
                 min = max
                 true
@@ -339,8 +344,8 @@ abstract class JvmInstruction {
             return false
         }
 
-        override fun calculateBytecode(positionMap: ObjectIntMap<JvmInstruction>, labels: IntObjectMap<out JvmInstruction>) {
-            val offset = positionMap[labels[target]!!] - positionMap[this]
+        override fun calculateBytecode(labels: IntObjectMap<out JvmInstruction>) {
+            val offset = labels[target]!!.bytecodeOffset - bytecodeOffset
             bytecode = if (max == 3) {
                 byteArrayOf_u8u16(
                     GOTO,
@@ -370,8 +375,8 @@ abstract class JvmInstruction {
 
         override var bytecode: ByteArray? = null
 
-        override fun calculateBytecode(positionMap: ObjectIntMap<JvmInstruction>, labels: IntObjectMap<out JvmInstruction>) {
-            val offset = positionMap[labels[target]!!] - positionMap[this]
+        override fun calculateBytecode(labels: IntObjectMap<out JvmInstruction>) {
+            val offset = labels[target]!!.bytecodeOffset - bytecodeOffset
 
             bytecode = if (max == 3) {
                 byteArrayOf_u8u16(
@@ -457,9 +462,9 @@ abstract class JvmInstruction {
 
         override fun targets(): IntArray = targets
 
-        override fun calculateBytecode(positionMap: ObjectIntMap<JvmInstruction>, labels: IntObjectMap<out JvmInstruction>) {
-            val pos: Int = positionMap[this]
-            val offset = positionMap[labels[defaultTarget]!!] - pos
+        override fun calculateBytecode(labels: IntObjectMap<out JvmInstruction>) {
+            val pos: Int = bytecodeOffset
+            val offset = labels[defaultTarget]!!.bytecodeOffset - pos
             val pad = calculateSwitchPadding(pos)
 
             bytecode = withWriter { writer ->
@@ -477,7 +482,7 @@ abstract class JvmInstruction {
 
                     for (k in low until high + 1) {
                         val target: Int = jumps.getOrDefault(k, defaultTarget)
-                        writer.u32(positionMap[labels[target]!!] - pos)
+                        writer.u32(labels[target]!!.bytecodeOffset - pos)
                     }
                 } else {
                     writer.u8(LOOKUPSWITCH)
@@ -494,7 +499,7 @@ abstract class JvmInstruction {
                     sortedKeys.sort()
                     for (key in sortedKeys) {
                         val target: Int = jumps[key]
-                        val offset = positionMap[labels[target]!!] - pos
+                        val offset = labels[target]!!.bytecodeOffset - pos
                         writer.u32(key)
                         writer.u32(offset)
                     }
