@@ -18,14 +18,13 @@
 package hu.oandras.kJarify.jvm.optimization
 
 import androidx.collection.ArraySet
-import java.util.*
 
 internal class CopySet<T> private constructor(
     @JvmField
     var root: T,
     private val set: MutableSet<T>,
     // keep track of insertion order in case root is overwritten
-    private val q: LinkedList<T>
+    private val q: ArrayDeque<T>
 ) {
 
     constructor(
@@ -33,7 +32,7 @@ internal class CopySet<T> private constructor(
     ): this(
         root = root,
         set = HashSet(1),
-        q = LinkedList(),
+        q = ArrayDeque(),
     )
 
     init {
@@ -49,7 +48,7 @@ internal class CopySet<T> private constructor(
     fun remove(key: T) {
         set.remove(key)
         // Heuristic - use the oldest element still in set as new root
-        while (!q.isEmpty() && !set.contains(root)) {
+        while (q.isNotEmpty() && !set.contains(root)) {
             root = q.removeFirst()
         }
     }
@@ -58,7 +57,7 @@ internal class CopySet<T> private constructor(
         return CopySet(
             root = root,
             set = if (set.isNotEmpty()) ArraySet(set) else ArraySet(),
-            q = if (q.isNotEmpty()) LinkedList(q) else LinkedList(),
+            q = if (q.isNotEmpty()) ArrayDeque(q) else ArrayDeque(),
         )
     }
 }

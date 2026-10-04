@@ -27,26 +27,28 @@ internal class CopySetsMap<T> {
     }
 
     fun clobber(key: T) {
-        get(key).remove(key)
-        lookup.remove(key)
+        // NB: no getOrPut here - clobbering an unknown key must not allocate a CopySet
+        lookup.remove(key)?.remove(key)
     }
 
     fun move(dest: T, src: T): Boolean {
         // return false if the corresponding instructions should be removed
         val sSet = get(src)
-        val dSet = get(dest)
+        // NB: no getOrPut for dest - a fresh set would only be orphaned below
+        val dSet = lookup[dest]
         if (sSet === dSet) {
             // src and dest are copies of same value, so we can remove
             return false
         }
-        dSet.remove(dest)
+        dSet?.remove(dest)
         sSet.add(dest)
         lookup[dest] = sSet
         return true
     }
 
     fun load(key: T): T {
-        return get(key).root
+        // A fresh CopySet(key).root == key, so unknown keys need no allocation
+        return lookup[key]?.root ?: key
     }
 
     fun copy(): CopySetsMap<T> {
