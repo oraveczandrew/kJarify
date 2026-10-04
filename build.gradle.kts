@@ -56,8 +56,24 @@ tasks.register<Test>("profiler") {
     classpath = sourceSets["test"].runtimeClasspath
     useJUnitPlatform()
     enableAssertions = false
+    // test2 needs GBs of retained classes per run; -Pheap=8g to override
+    maxHeapSize = (project.findProperty("heap") as String?) ?: "12g"
     filter { includeTestsMatching("hu.oandras.kJarify.ProfilerTest") }
-    // JFR dump for analysis: ./gradlew profiler -Pjfr
+    // passthrough: ./gradlew profiler -Pinput=test2-base.apk -Pruns=2
+    // (Gradle -P props don't reach the test JVM as -D automatically)
+    for (key in listOf("input", "runs", "warmup", "threads")) {
+        val value: String? = project.findProperty("profiler.$key") as String?
+            ?: project.findProperty(key) as String?
+        if (value != null) {
+            systemProperty("profiler.$key", value)
+        }
+    }
+    // GC choice: ./gradlew profiler -Pgc=parallel (default: G1)
+    when ((project.findProperty("gc") as String?)?.lowercase()) {
+        "parallel" -> jvmArgs("-XX:+UseParallelGC")
+        "z" -> jvmArgs("-XX:+UseZGC")
+        "serial" -> jvmArgs("-XX:+UseSerialGC")
+    }
     if (project.hasProperty("jfr")) {
         jvmArgs(
             "-XX:+FlightRecorder",

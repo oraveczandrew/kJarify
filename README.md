@@ -3,7 +3,7 @@
 # KJarify
 
 A performant, multithreaded DEX to Java bytecode translator, written in kotlin.\
-It has a similar capabilities as the original EnJarify written in Python ([source here](https://github.com/Storyyeller/enjarify)).
+It has similar capabilities as the original EnJarify written in Python ([source here](https://github.com/Storyyeller/enjarify)).
 
 ## Usage
 
@@ -74,9 +74,30 @@ It has a similar capabilities as the original EnJarify written in Python ([sourc
 
 ### Speed
 
-On a 8c/16t 7820X CPU 
+Recent measurements (8c/16t, OpenJDK 21, CPython 3.14, PRETTY optimization):
 
-| DEX size | EnJarify | KJarify |
-|----------|----------|---------|
-| ~16.6MB  | 1min 5s  | 5.6s    |
-| ~94.6MB  | 8 min 9s | 37s     |
+| Input     | DEX size | Classes | EnJarify | KJarify |
+|-----------|----------|---------|----------|---------|
+| small APK | ~18MB    | ~12k    | 56s      | ~1.0s   |
+| small APK | ~10.5MB  | ~11k    | 1min 12s | ~1.1s   |
+| large APK | ~359MB   | ~445k   | ~32min   | ~41s    |
+
+Translation scales with physical CPU cores (worker count is tunable, see below).
+
+### Profiling
+
+A profiler test translates a bundled sample APK and reports wall time,
+throughput, heap and GC stats:
+
+    ./gradlew profiler
+
+Options (all optional):
+
+    ./gradlew profiler -Pinput=app-beta.apk -Pruns=3 -Pwarmup=1 -Pthreads=8 -Pheap=12g -Pjfr -Pgc=parallel
+
+### Performance tips
+
+- For large APKs (>100MB DEX), ParallelGC is ~20% faster than G1:
+  `java -XX:+UseParallelGC -jar kJarify-fat.jar big.apk`
+- Worker threads beyond the physical core count add little (hyperthreading
+  does not help this workload); try matching the physical core count.

@@ -22,8 +22,9 @@ import hu.oandras.kJarify.dex.DexProcessor
 import hu.oandras.kJarify.dex.DexReader
 import hu.oandras.kJarify.jvm.optimization.OptimizationOptions
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.asCoroutineDispatcher
 import org.junit.jupiter.api.Test
-import org.junit.jupiter.api.condition.EnabledIf
+
 import java.io.File
 import java.lang.management.ManagementFactory
 import java.util.concurrent.atomic.AtomicLong
@@ -32,8 +33,16 @@ class ProfilerTest {
 
     @Test
     fun profileAppBeta() {
-        val input = File("app-beta.apk")
+        // -Dprofiler.input=test2-base.apk -Dprofiler.runs=2 -Dprofiler.warmup=1
+        val input = File(
+            System.getProperty(
+                "profiler.input",
+                "src/test/resources/ksvg-showcase-1.0.0-beta01.apk",
+            )
+        )
         require(input.exists()) { "Missing input: ${input.absolutePath}" }
+        val runs = System.getProperty("profiler.runs", "3").toInt()
+        val warmups = System.getProperty("profiler.warmup", "1").toInt()
         val apkSizeMb = input.length() / 1024.0 / 1024.0
         println("=== kJarify profiler ===")
         println("Input: ${input.absolutePath} (${"%.2f".format(apkSizeMb)} MB)")
@@ -61,34 +70,40 @@ class ProfilerTest {
         fun gcCount() = gcBeans.sumOf { it.collectionCount }
         fun gcTime() = gcBeans.sumOf { it.collectionTime }
 
-        // Warmup (JIT): 1 full translation, result discarded
-        println("--- warmup run ---")
+        // Warmup (JIT): full translations, results discarded
+        println("--- $warmups warmup run(s) ---")
         gc()
-        val w0 = System.nanoTime()
-        runBlockingTranslate(dexDataList)
-        val w1 = System.nanoTime()
-        println("warmup: ${(w1 - w0) / 1_000_000} ms")
+        repeat(warmups) {
+            val w0 = System.nanoTime()
+            val (wn, _) = runBlockingTranslate(dexDataList)
+            val w1 = System.nanoTime()
+            println("warmup: ${(w1 - w0) / 1_000_000} ms, classes=$wn")
+        }
 
         // Measured runs
-        val runs = 3
         val times = mutableListOf<Long>()
         var lastClasses = 0
         var lastBytes = 0L
+        val threadMx = ManagementFactory.getThreadMXBean()
         repeat(runs) { i ->
             gc()
             val memBefore = usedMb()
             val g0 = gcCount(); val gt0 = gcTime()
+            val cpu0 = totalCpuTime(threadMx)
             val t0 = System.nanoTime()
             val (n, bytes) = runBlockingTranslate(dexDataList)
             val t1 = System.nanoTime()
+            val cpu1 = totalCpuTime(threadMx)
             val g1 = gcCount(); val gt1 = gcTime()
             lastClasses = n; lastBytes = bytes
             val ms = (t1 - t0) / 1_000_000
             times.add(ms)
             val memAfter = usedMb()
+            val effCores = (cpu1 - cpu0).toDouble() / (t1 - t0).coerceAtLeast(1)
             println("run ${i + 1}/$runs: $ms ms, classes=$n, out=${"%.2f".format(bytes / 1024.0 / 1024.0)} MB, " +
                 "heap ${"%.1f".format(memBefore)} -> ${"%.1f".format(memAfter)} MB, " +
-                "GC pauses=${g1 - g0}, GC time=${gt1 - gt0} ms")
+                "GC pauses=${g1 - g0}, GC time=${gt1 - gt0} ms, " +
+                "eff.cores=${"%.1f".format(effCores)}")
         }
 
         val avg = times.average()
@@ -105,11 +120,19 @@ class ProfilerTest {
         File("build/profiler-report.txt").apply {
             parentFile.mkdirs()
             writeText(buildString {
-                appendLine("input=app-beta.apk (${"%.2f".format(apkSizeMb)} MB)")
+                appendLine("input=${input.name} (${"%.2f".format(apkSizeMb)} MB)")
                 appendLine("dexFiles=${dexDataList.size} dexTotalMb=${"%.2f".format(dexTotalMb)}")
                 appendLine("classes=$classCount")
                 appendLine("timesMs=$times avgMs=${"%.0f".format(avg)} bestMs=$best")
             })
+        }
+    }
+
+    private fun totalCpuTime(threadMx: java.lang.management.ThreadMXBean): Long {
+        if (!threadMx.isThreadCpuTimeSupported) return 0L
+        return threadMx.allThreadIds.sumOf { id ->
+            val t = threadMx.getThreadCpuTime(id).coerceAtLeast(0L)
+            t
         }
     }
 
@@ -120,12 +143,25 @@ class ProfilerTest {
                 outBytes.addAndGet(classData.size.toLong())
             }
         }
-        val proc = DexProcessor(
-            optimizationOptions = OptimizationOptions.PRETTY,
-            coroutineDispatcher = Dispatchers.Default,
-            callback = cb,
-        )
-        kotlinx.coroutines.runBlocking { proc.suspendProcess(dexDataList) }
-        return proc.classes.size to outBytes.get()
+        // -Dprofiler.threads=N overrides worker count (default: Dispatchers.Default)
+        val threads = System.getProperty("profiler.threads")?.toIntOrNull()
+        val dispatcher = if (threads != null) {
+            java.util.concurrent.Executors.newFixedThreadPool(threads).asCoroutineDispatcher()
+        } else {
+            Dispatchers.Default
+        }
+        try {
+            val proc = DexProcessor(
+                optimizationOptions = OptimizationOptions.PRETTY,
+                coroutineDispatcher = dispatcher,
+                callback = cb,
+            )
+            kotlinx.coroutines.runBlocking { proc.suspendProcess(dexDataList) }
+            return proc.classes.size to outBytes.get()
+        } finally {
+            if (dispatcher !== Dispatchers.Default) {
+                (dispatcher as java.io.Closeable).close()
+            }
+        }
     }
 }
