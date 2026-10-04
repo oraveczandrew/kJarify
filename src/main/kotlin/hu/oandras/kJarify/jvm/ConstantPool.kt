@@ -30,19 +30,63 @@ internal sealed interface PoolData {
 
     val tag: Int
 
-    data class IntData(
-        override val tag: Int,
-        val value: Int
-    ) : PoolData
+    class IntData(
+        override var tag: Int,
+        var value: Int
+    ) : PoolData {
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (javaClass != other?.javaClass) return false
 
-    data class LongData(
-        override val tag: Int,
-        val value: Long,
-    ) : PoolData
+            other as IntData
+
+            if (tag != other.tag) return false
+            if (value != other.value) return false
+
+            return true
+        }
+
+        override fun hashCode(): Int {
+            var result = tag
+            result = 31 * result + value
+            return result
+        }
+
+        override fun toString(): String {
+            return "IntData(tag=$tag, value=$value)"
+        }
+    }
+
+    class LongData(
+        override var tag: Int,
+        var value: Long,
+    ) : PoolData {
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (javaClass != other?.javaClass) return false
+
+            other as LongData
+
+            if (tag != other.tag) return false
+            if (value != other.value) return false
+
+            return true
+        }
+
+        override fun hashCode(): Int {
+            var result = tag
+            result = 31 * result + value.hashCode()
+            return result
+        }
+
+        override fun toString(): String {
+            return "LongData(tag=$tag, value=$value)"
+        }
+    }
 
     class IntArrayData(
-        override val tag: Int,
-        val intArray: IntArray,
+        override var tag: Int,
+        var intArray: IntArray,
     ) : PoolData {
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
@@ -68,8 +112,8 @@ internal sealed interface PoolData {
     }
 
     class ByteArrayData(
-        override val tag: Int,
-        val byteArray: ByteArray,
+        override var tag: Int,
+        var byteArray: ByteArray,
     ) : PoolData {
         override fun equals(other: Any?): Boolean {
             if (this === other) return true
@@ -115,17 +159,24 @@ internal abstract class ConstantPool {
 
     abstract fun lowSpace(): Int
 
+    // Reusable lookup probes. A pool instance is used by a single class
+    // translation (hence thread-confined, just like the mutable lookup maps),
+    // so probing with shared mutable keys is safe. Probes are never stored
+    // in the maps - a fresh key is allocated on cache miss.
+    private val intProbe = PoolData.IntData(0, 0)
+    private val longProbe = PoolData.LongData(0, 0L)
+    private val intArrayProbe = PoolData.IntArrayData(0, IntArray(0))
+    private val byteArrayProbe = PoolData.ByteArrayData(0, ByteArray(0))
+
     @Throws(ClassFileLimitExceeded::class)
-    private fun get(tag: Int, constantData: PoolData): Int {
-        return lookup[tag].getOrPut(constantData) {
-            val low = tag == CONSTANT_Integer || tag == CONSTANT_Float || tag == CONSTANT_String
-            val index = obtainIndex(low, width(tag))
-            set(
-                constantData,
-                index
-            )
+    private fun intern(tag: Int, constantData: PoolData): Int {
+        val low = tag == CONSTANT_Integer || tag == CONSTANT_Float || tag == CONSTANT_String
+        val index = obtainIndex(low, width(tag))
+        set(
+            constantData,
             index
-        }
+        )
+        return index
     }
 
     private fun set(
@@ -138,20 +189,44 @@ internal abstract class ConstantPool {
     }
 
     private fun get(tag: Int, args: Int): Int {
-        return get(tag, PoolData.IntData(tag, args))
+        val map = lookup[tag]
+        intProbe.tag = tag
+        intProbe.value = args
+        if (map.containsKey(intProbe)) {
+            return map[intProbe]
+        }
+        return intern(tag, PoolData.IntData(tag, args))
     }
 
     private fun get(tag: Int, args: Long): Int {
-        return get(tag, PoolData.LongData(tag, args))
+        val map = lookup[tag]
+        longProbe.tag = tag
+        longProbe.value = args
+        if (map.containsKey(longProbe)) {
+            return map[longProbe]
+        }
+        return intern(tag, PoolData.LongData(tag, args))
     }
 
     private fun get(tag: Int, args: IntArray): Int {
-        return get(tag, PoolData.IntArrayData(tag, args))
+        val map = lookup[tag]
+        intArrayProbe.tag = tag
+        intArrayProbe.intArray = args
+        if (map.containsKey(intArrayProbe)) {
+            return map[intArrayProbe]
+        }
+        return intern(tag, PoolData.IntArrayData(tag, args))
     }
 
     @Suppress("SameParameterValue")
     private fun get(tag: Int, args: ByteArray): Int {
-        return get(tag, PoolData.ByteArrayData(tag, args))
+        val map = lookup[tag]
+        byteArrayProbe.tag = tag
+        byteArrayProbe.byteArray = args
+        if (map.containsKey(byteArrayProbe)) {
+            return map[byteArrayProbe]
+        }
+        return intern(tag, PoolData.ByteArrayData(tag, args))
     }
 
     @Throws(ClassFileLimitExceeded::class)
