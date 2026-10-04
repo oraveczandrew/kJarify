@@ -66,7 +66,8 @@ internal object CopyPropagationOptimization : JvmOptimization() {
                             JvmInstruction.RegistryAccess(
                                 registryId = rootKey.registryId,
                                 staticType = rootKey.staticType,
-                                store = false
+                                store = false,
+                                key = rootKey,
                             )
                         )
                     }

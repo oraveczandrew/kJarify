@@ -20,6 +20,7 @@ package hu.oandras.kJarify.jvm
 import androidx.collection.ArraySet
 import androidx.collection.IntObjectMap
 import androidx.collection.MutableIntObjectMap
+import androidx.collection.MutableLongObjectMap
 import androidx.collection.MutableObjectIntMap
 import hu.oandras.kJarify.JAVA_LANG_THROWABLE
 import hu.oandras.kJarify.dex.DalvikInstruction
@@ -49,7 +50,18 @@ class IRWriter private constructor(
         override val pool: ConstantPool,
         override val calculator: Calculator,
         override val optimizationOptions: OptimizationOptions,
-    ): IRBlock.ConstParameters
+    ): IRBlock.ConstParameters {
+        // Registry keys are immutable value objects shared by all instructions
+        // of a method - canonicalize them instead of allocating one per access.
+        private val registryKeyCache = MutableLongObjectMap<RegistryAccess.Key>()
+
+        override fun canonicalKey(registryId: Int, staticType: Int): RegistryAccess.Key {
+            val composite = (registryId.toLong() shl 32) or (staticType.toLong() and 0xFFFFFFFFL)
+            return registryKeyCache.getOrPut(composite) {
+                RegistryAccess.Key(registryId, staticType)
+            }
+        }
+    }
 
     private val _irBlocks: MutableIntObjectMap<IRBlock> = MutableIntObjectMap(blockCountHint)
 
@@ -102,7 +114,7 @@ class IRWriter private constructor(
                 if (st == Scalars.INVALID) {
                     it.add(null)
                 } else {
-                    it.add(RegistryAccess.Key(i + regOff, st))
+                    it.add(params.canonicalKey(i + regOff, st))
                 }
             }
         }
@@ -224,6 +236,10 @@ class IRWriter private constructor(
 
     fun isJumpTarget(instruction: JvmInstruction): Boolean {
         return jumpTargets.contains(instruction)
+    }
+
+    fun canonicalKey(registryId: Int, staticType: Int): RegistryAccess.Key {
+        return params.canonicalKey(registryId, staticType)
     }
 
     override fun toString(): String {

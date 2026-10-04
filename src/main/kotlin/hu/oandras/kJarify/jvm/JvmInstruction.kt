@@ -109,11 +109,12 @@ abstract class JvmInstruction {
         registryId: Int,
         staticType: Int,
         @JvmField
-        val store: Boolean
+        val store: Boolean,
+        key: Key? = null,
     ) : JvmInstruction() {
 
         @JvmField
-        val key: Key = Key(registryId, staticType)
+        val key: Key = key ?: Key(registryId, staticType)
 
         @JvmField
         val wide: Boolean = Scalars.isWide(staticType)

@@ -34,7 +34,7 @@ class IRBlock internal constructor(
     val pos: Int,
     @JvmField
     internal val typeData: TypeInfo,
-    params: ConstParameters,
+    private val params: ConstParameters,
 ) {
 
     @JvmField
@@ -48,6 +48,7 @@ class IRBlock internal constructor(
         val pool: ConstantPool
         val calculator: Calculator
         val optimizationOptions: OptimizationOptions
+        fun canonicalKey(registryId: Int, staticType: Int): RegistryAccess.Key
     }
 
     private val _instructions: ArrayList<JvmInstruction> = ArrayList<JvmInstruction>(5).apply {
@@ -91,7 +92,8 @@ class IRBlock internal constructor(
             add(RegistryAccess(
                 registryId = reg,
                 staticType = staticType,
-                store = false
+                store = false,
+                key = params.canonicalKey(reg, staticType),
             ))
 
             if (staticType == Scalars.OBJ && typeData.tainted[reg]) {
@@ -117,7 +119,7 @@ class IRBlock internal constructor(
         if (at.contentEquals(ArrayTypes.NULL)) {
             constNull()
         } else {
-            add(RegistryAccess(reg, Scalars.OBJ, false))
+            add(RegistryAccess(reg, Scalars.OBJ, false, params.canonicalKey(reg, Scalars.OBJ)))
 
             if (typeData.tainted[reg]) {
                 val className = if (at.contentEquals(ArrayTypes.INVALID)) {
@@ -132,7 +134,7 @@ class IRBlock internal constructor(
     }
 
     fun store(reg: Int, stype: Int) {
-        add(RegistryAccess(reg, stype, true))
+        add(RegistryAccess(reg, stype, true, params.canonicalKey(reg, stype)))
     }
 
     fun returnOp() {

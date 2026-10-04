@@ -107,7 +107,7 @@ internal object Registers {
                     if (useCounts[candidate]!! > useCounts[target]!! + 3) {
                         Collections.swap(regs, i, candidateI)
                         val load = RegistryAccess.raw(i, target.staticType, false)
-                        val store = RegistryAccess(target.registryId, target.staticType, true)
+                        val store = RegistryAccess(target.registryId, target.staticType, true, target)
                         instructionList.add(0, load)
                         instructionList.add(1, store)
                         irData.flatInstructions = instructionList
