@@ -282,7 +282,8 @@ fun parseBytecode(
         }
     }
 
-    assert(!catchAddresses.contains(0))
+    // NB: catch handlers may start at position 0 in real-world DEX files
+    // (e.g. synchronized methods), the branch above handles that correctly.
 
     // Fill in implicit cast data
     for (i in 1 until ops.size) {
