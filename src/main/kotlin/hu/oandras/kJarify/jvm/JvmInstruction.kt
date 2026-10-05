@@ -87,7 +87,6 @@ abstract class JvmInstruction {
     // To the correct execution this method can't be overridden
     final override fun equals(other: Any?): Boolean = super.equals(other)
 
-    @OptIn(ExperimentalStdlibApi::class)
     protected fun appendByteCodeStr(stringBuilder: StringBuilder) {
         val bytecode = bytecode
         if (bytecode != null) {

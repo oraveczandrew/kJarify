@@ -58,13 +58,7 @@ object KJarify {
         )
 
         val inputFile = input.absolutePath
-        val dexReader = if (inputFile.endsWith(".apk", ignoreCase = true)) {
-            DexReader.ApkDexFileReader
-        } else {
-            DexReader.SimpleDexFileReader
-        }
-
-        val dexDataList = dexReader.read(filePath = inputFile)
+        val dexDataList = DexReader.forFile(inputFile).read(filePath = inputFile)
 
         val callback = object : DexProcessor.SysOutProcessStatusCallBack() {
             override suspend fun suspendOnClassTranslated(unicodeRelativePath: String, classData: ByteArray) {

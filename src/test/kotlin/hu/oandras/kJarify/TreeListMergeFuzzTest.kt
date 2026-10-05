@@ -28,6 +28,11 @@ import kotlin.test.assertTrue
 
 class TreeListMergeFuzzTest {
 
+    private companion object {
+        // Covers direct (16), level 1 (272) and level 2 trie nodes
+        const val MAX_INDEX = 600
+    }
+
     // Number of trials where merge() reports changed=true although the
     // observable content is identical (e.g. func collapses everything to
     // default). Best-effort sharing only; legacy code behaves the same.
@@ -61,29 +66,28 @@ class TreeListMergeFuzzTest {
             val op = intFuncOps[trial % intFuncOps.size]
             val func = IntTreeList.IntIntFunc { a, b -> op(a, b) }
             val default = if (trial % 2 == 0) 0 else -1
-            val maxIndex = 600 // covers direct (16), level 1 (272) and level 2
-
-            val leftRef = randomSparseMap(random, maxIndex)
-            val rightRef = randomSparseMap(random, maxIndex)
+            
+            val leftRef = randomSparseMap(random)
+            val rightRef = randomSparseMap(random)
 
             val left = IntTreeList(default, func)
             leftRef.forEach { (k, v) -> left[k] = v }
             val right = IntTreeList(default, func)
             rightRef.forEach { (k, v) -> right[k] = v }
 
-            val leftBefore = snapshot(left, maxIndex)
-            val rightBefore = snapshot(right, maxIndex)
+            val leftBefore = snapshot(left)
+            val rightBefore = snapshot(right)
 
             val changed = left.merge(right)
 
             // reference: elementwise func, missing = default
-            for (i in 0 until maxIndex) {
+            for (i in 0 until MAX_INDEX) {
                 val expected = op(leftBefore[i], rightBefore[i])
                 assertEquals(expected, left[i], "trial=$trial index=$i")
             }
 
             // 'other' must be untouched
-            for (i in 0 until maxIndex) {
+            for (i in 0 until MAX_INDEX) {
                 assertEquals(rightBefore[i], right[i], "trial=$trial: right mutated at $i")
             }
 
@@ -107,12 +111,12 @@ class TreeListMergeFuzzTest {
         val random = Random(99)
         repeat(200) {
             val full = IntTreeList(0, func)
-            val ref = randomSparseMap(random, 600)
+            val ref = randomSparseMap(random)
             ref.forEach { (k, v) -> full[k] = v }
 
             // empty.merge(full): mergeWithDefault path
             val empty = IntTreeList(0, func)
-            val emptyBefore = snapshot(empty, 600)
+            val emptyBefore = snapshot(empty)
             val changedEmpty = empty.merge(full)
             checkChangedFlag(emptyBefore, empty, changedEmpty, "empty-vs-full")
             ref.forEach { (k, v) -> assertEquals(v and 0, empty[k]) }
@@ -120,7 +124,7 @@ class TreeListMergeFuzzTest {
             // full.merge(empty): other direction, func(x, default)
             val full2 = IntTreeList(0, func)
             ref.forEach { (k, v) -> full2[k] = v }
-            val before = snapshot(full2, 600)
+            val before = snapshot(full2)
             val changed = full2.merge(IntTreeList(0, func))
             checkChangedFlag(before, full2, changed, "full-vs-empty")
             for (i in 0 until 600) assertEquals(before[i] and 0, full2[i])
@@ -141,29 +145,27 @@ class TreeListMergeFuzzTest {
         repeat(1000) { trial ->
             val op = ops[trial % ops.size]
             val default = 0
-            val maxIndex = 600
-
-            val leftRef = randomSparseMap(random, maxIndex)
-            val rightRef = randomSparseMap(random, maxIndex)
+            
+            val leftRef = randomSparseMap(random)
+            val rightRef = randomSparseMap(random)
 
             val left = TreeList(default, op)
             leftRef.forEach { (k, v) -> left[k] = v }
             val right = TreeList(default, op)
             rightRef.forEach { (k, v) -> right[k] = v }
 
-            val leftBefore = (0 until maxIndex).map { left[it] }
-            val rightBefore = (0 until maxIndex).map { right[it] }
+            val leftBefore = (0 until MAX_INDEX).map { left[it] }
+            val rightBefore = (0 until MAX_INDEX).map { right[it] }
 
             val changed = left.merge(right)
 
-            for (i in 0 until maxIndex) {
+            for (i in 0 until MAX_INDEX) {
                 assertEquals(op.apply(leftBefore[i], rightBefore[i]), left[i], "trial=$trial index=$i")
             }
-            for (i in 0 until maxIndex) {
+            for (i in 0 until MAX_INDEX) {
                 assertEquals(rightBefore[i], right[i], "trial=$trial: right mutated at $i")
             }
-            val leftBeforeInts = leftBefore
-            val contentDiffers = (0 until maxIndex).any { leftBeforeInts[it] != left[it] }
+            val contentDiffers = (0 until MAX_INDEX).any { leftBefore[it] != left[it] }
             if (contentDiffers) {
                 assertTrue(changed, "trial=$trial: real content change was not reported")
             } else if (changed) {
@@ -178,17 +180,17 @@ class TreeListMergeFuzzTest {
         )
     }
 
-    private fun randomSparseMap(random: Random, maxIndex: Int): Map<Int, Int> {
+    private fun randomSparseMap(random: Random): Map<Int, Int> {
         val n = random.nextInt(0, 60)
         val map = HashMap<Int, Int>()
         repeat(n) {
             // bias towards small indices but regularly cross level boundaries
-            val k = if (random.nextDouble() < 0.7) random.nextInt(0, 40) else random.nextInt(0, maxIndex)
+            val k = if (random.nextDouble() < 0.7) random.nextInt(0, 40) else random.nextInt(0, MAX_INDEX)
             map[k] = random.nextInt(0, 8)
         }
         return map
     }
 
-    private fun snapshot(list: IntTreeList, maxIndex: Int): List<Int> =
-        (0 until maxIndex).map { list[it] }
+    private fun snapshot(list: IntTreeList): List<Int> =
+        (0 until MAX_INDEX).map { list[it] }
 }

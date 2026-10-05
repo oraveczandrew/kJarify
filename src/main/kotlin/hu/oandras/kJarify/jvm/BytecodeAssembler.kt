@@ -39,7 +39,7 @@ internal object BytecodeAssembler {
         opts: OptimizationOptions
     ): Map<Method, ByteArray> {
         // if we have any code, make sure to reserve pool slot for attr name
-        if (!codeIRs.isEmpty()) {
+        if (codeIRs.isNotEmpty()) {
             pool.utf8Ref(CODE)
         }
 
@@ -49,7 +49,7 @@ internal object BytecodeAssembler {
             }
 
             // Now allocate constants used by potentially long methods
-            if (!longIRs.isEmpty()) {
+            if (longIRs.isNotEmpty()) {
                 Consts.allocateRequiredConstants(pool, longIRs)
             }
 

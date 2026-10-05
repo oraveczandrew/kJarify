@@ -82,15 +82,11 @@ internal object Consts {
 
         val scores: HashMap<PoolData, Int> = HashMap(narrowPairs.size + widePairs.size)
 
-        for (entry in narrowPairs.entries) {
-            val p = entry.key
-            val count: Int = entry.value
+        for ((p, count) in narrowPairs.entries) {
             scores[p] = (altLens[p]!! - 3) * count
         }
 
-        for (entry in widePairs.entries) {
-            val p = entry.key
-            val count: Int = entry.value
+        for ((p, count) in widePairs.entries) {
             scores[p] = (altLens[p]!! - 3) * count
         }
 

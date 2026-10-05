@@ -17,8 +17,6 @@
 
 package hu.oandras.kJarify.jvm.optimization
 
-import androidx.collection.ArrayMap
-
 internal class CopySetsMap<T> {
     // Hot path (per-instruction lookup): HashMap O(1) beats ArrayMap binary search here
     private val lookup: MutableMap<T, CopySet<T>> = HashMap()
@@ -58,14 +56,12 @@ internal class CopySetsMap<T> {
         val copies: HashMap<CopySet<T>, CopySet<T>> = HashMap()
         val newMap = CopySetsMap<T>()
 
-        for (entry in lookup.entries) {
-            val v = entry.value
-
+        for ((key, v) in lookup.entries) {
             val copy = copies.getOrPut(v) {
                 v.copy()
             }
 
-            newMap.lookup[entry.key] = copy
+            newMap.lookup[key] = copy
         }
 
         return newMap

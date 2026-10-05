@@ -89,13 +89,7 @@ class IRWriter private constructor(
 
     private var _exceptionStarts: MutableSet<Label>? = null
 
-    val exceptionStarts: Set<Label>?
-        get() = _exceptionStarts
-
     private var _exceptionEnds: MutableSet<Label>? = null
-
-    val exceptionEnds: Set<Label>?
-        get() = _exceptionEnds
 
     @JvmField
     val jumpTargets: MutableSet<JvmInstruction> = HashSet()
@@ -184,7 +178,7 @@ class IRWriter private constructor(
         sortedKeys.sort()
         for (pos in sortedKeys) {
             if (exceptionRedirects != null && exceptionRedirects.containsKey(pos)) {
-                if (!instructions.isEmpty() && !(instructions[instructions.lastIndex]).fallsThrough()) {
+                if (instructions.isNotEmpty() && !(instructions[instructions.lastIndex]).fallsThrough()) {
                     instructions.add(exceptionRedirects.remove(pos)!!)
                     instructions.add(Pop())
                 }
@@ -237,10 +231,6 @@ class IRWriter private constructor(
 
     fun isJumpTarget(instruction: JvmInstruction): Boolean {
         return jumpTargets.contains(instruction)
-    }
-
-    fun canonicalKey(registryId: Int, staticType: Int): RegistryAccess.Key {
-        return params.canonicalKey(registryId, staticType)
     }
 
     override fun toString(): String {

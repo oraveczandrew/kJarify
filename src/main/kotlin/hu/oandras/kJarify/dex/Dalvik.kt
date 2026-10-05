@@ -15,8 +15,6 @@
  *
  */
 
-@file:OptIn(ExperimentalStdlibApi::class)
-
 package hu.oandras.kJarify.dex
 
 import androidx.collection.*

@@ -50,7 +50,7 @@ private fun makeDecodeIterator(b: ByteArray): IntIterator {
                 }
 
                 var bits = x % (1 shl (6 - extra))
-                for (i in 0 until extra) {
+                repeat(extra) {
                     bits = (bits shl 6) xor (b[index++].toInt() and 63)
                 }
                 return bits

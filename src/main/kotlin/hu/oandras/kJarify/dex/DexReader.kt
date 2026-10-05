@@ -26,6 +26,16 @@ import java.util.zip.ZipFile
 interface DexReader {
     fun read(filePath: String): List<ByteArray>
 
+    companion object {
+        fun forFile(filePath: String): DexReader {
+            return if (filePath.endsWith(".apk", ignoreCase = true)) {
+                ApkDexFileReader
+            } else {
+                SimpleDexFileReader
+            }
+        }
+    }
+
     object SimpleDexFileReader: DexReader {
 
         override fun read(filePath: String): List<ByteArray> {

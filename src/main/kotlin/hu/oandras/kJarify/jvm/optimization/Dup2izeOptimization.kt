@@ -137,7 +137,7 @@ internal object Dup2izeOptimization: JvmOptimization() {
 
         // Greedily choose a set of disjoint ranges to dup2ize.
         val chosen = ArrayList<UseRange>(ranges.size)
-        while (!ranges.isEmpty()) {
+        while (ranges.isNotEmpty()) {
             val best = ranges.removeAt(ranges.lastIndex)
             chosen.add(best)
             val newRanges = ArrayList<UseRange>(ranges.size * 2)
@@ -188,7 +188,8 @@ internal object Dup2izeOptimization: JvmOptimization() {
         for (i in 0 until eleCount) {
             val cur = if (have < needed) {
                 val cur = ArrayList<JvmInstruction>(2)
-                if (have == 1 && needed >= 2) {
+                // NB: needed >= 2 here follows from have < needed with have == 1
+                if (have == 1) {
                     cur.add(Dup())
                     have += 1
                 }

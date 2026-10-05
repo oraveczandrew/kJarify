@@ -53,7 +53,7 @@ class ClassData(dex: DexFile, offset: Int) {
 
     private fun addFields(dex: DexFile, stream: Stream, num: Int, fields: MutableList<Field>) {
         var fieldIndex = 0
-        for (i in 0 until num) {
+        repeat(num) {
             fieldIndex += stream.unsignedLeb128()
             fields.add(Field(dex, fieldIndex, stream.unsignedLeb128()))
         }
@@ -61,7 +61,7 @@ class ClassData(dex: DexFile, offset: Int) {
 
     private fun addMethods(dex: DexFile, stream: Stream, num: Int, methods: MutableList<Method>) {
         var methodIndex = 0
-        for (i in 0 until num) {
+        repeat(num) {
             methodIndex += stream.unsignedLeb128()
             methods.add(Method(
                 dex = dex,

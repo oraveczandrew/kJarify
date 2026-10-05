@@ -82,8 +82,4 @@ internal class TypeInfo(
             assign(reg, st, at)
         }
     }
-
-    fun isSame(other: TypeInfo): Boolean {
-        return prims == other.prims && arrays == other.arrays && tainted == other.tainted
-    }
 }

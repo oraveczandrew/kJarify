@@ -139,7 +139,7 @@ internal sealed interface PoolData {
     }
 }
 
-@Suppress("ConstPropertyName", "SpellCheckingInspection", "PropertyName")
+@Suppress("ConstPropertyName", "PropertyName")
 internal abstract class ConstantPool {
     // NOT thread-safe by design: one instance serves a single class translation
     // (created per writeWithOptimizationOptions call, never shared between
