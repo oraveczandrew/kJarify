@@ -1,6 +1,9 @@
 jdk: openjdk21
 before_install:
-  - sdk install gradle 9.3.1
-  - sdk use gradle 9.3.1
+  # Pinned to 9.7.1: sdkman's 9.8.0 archive is currently corrupt on JitPack
+  # ("The archive was corrupt and has been removed").
+  - sdk install gradle 9.7.1
+  - sdk use gradle 9.7.1
+  - gradle --version
 install:
   - gradle build publishToMavenLocal -Pgroup=$GROUP -Pversion=$VERSION --console=plain --info
