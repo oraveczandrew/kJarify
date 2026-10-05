@@ -18,7 +18,7 @@ publishing {
 
 // JitPack passes -Pgroup/-Pversion; keep local defaults when flags are absent.
 group = providers.gradleProperty("group").getOrElse("hu.oandras.kJarify")
-version = providers.gradleProperty("version").getOrElse("1.1.1")
+version = providers.gradleProperty("version").getOrElse("1.1.2")
 
 repositories.apply {
     mavenCentral()
