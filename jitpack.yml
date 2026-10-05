@@ -1,9 +1,10 @@
 jdk: openjdk21
 before_install:
-  # Pinned to 9.7.1: sdkman's 9.8.0 archive is currently corrupt on JitPack
-  # ("The archive was corrupt and has been removed").
-  - sdk install gradle 9.7.1
-  - sdk use gradle 9.7.1
-  - gradle --version
+  # NOTE: sdkman gradle archives are intermittently corrupt on JitPack builders
+  # ("The archive was corrupt and has been removed"), so fetch the distribution
+  # directly from services.gradle.org instead of `sdk install gradle`.
+  - curl -sSL -o /tmp/gradle.zip https://services.gradle.org/distributions/gradle-9.8.0-bin.zip
+  - rm -rf /tmp/gradle-9.8.0 && unzip -q -o /tmp/gradle.zip -d /tmp
+  - /tmp/gradle-9.8.0/bin/gradle --version
 install:
-  - gradle build publishToMavenLocal -Pgroup=$GROUP -Pversion=$VERSION --console=plain --info
+  - /tmp/gradle-9.8.0/bin/gradle build publishToMavenLocal -Pgroup=$GROUP -Pversion=$VERSION --console=plain --info
