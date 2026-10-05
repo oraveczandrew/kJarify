@@ -7,7 +7,7 @@ plugins {
 }
 
 group = "hu.oandras.kJarify"
-version = "1.0.2"
+version = "1.1.0"
 
 repositories.apply {
     mavenCentral()
