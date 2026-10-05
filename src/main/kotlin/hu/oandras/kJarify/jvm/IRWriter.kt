@@ -76,7 +76,8 @@ class IRWriter private constructor(
     val exceptions: List<ExceptionData>
         get() = _exceptions ?: emptyList()
 
-    private val _labels: MutableIntObjectMap<Label> = MutableIntObjectMap(1)
+    // One label per block, so the block count hint is exact here
+    private val _labels: MutableIntObjectMap<Label> = MutableIntObjectMap(blockCountHint)
 
     val labels: IntObjectMap<Label>
         get() = _labels

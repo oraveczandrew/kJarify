@@ -43,10 +43,10 @@ class DexFile(
     @JvmField
     val classes: List<DexClass>
 
-    private val stringCache: ThreadSafeIntObjectMap<ByteArray> = ThreadSafeIntObjectMap()
-    private val classTypeCache: ThreadSafeIntObjectMap<ByteArray> = ThreadSafeIntObjectMap()
-    private val fieldIdCache: ThreadSafeIntObjectMap<FieldId> = ThreadSafeIntObjectMap()
-    private val methodIdCache: ThreadSafeIntObjectMap<MethodId> = ThreadSafeIntObjectMap()
+    private lateinit var stringCache: ThreadSafeIntObjectMap<ByteArray>
+    private lateinit var classTypeCache: ThreadSafeIntObjectMap<ByteArray>
+    private lateinit var fieldIdCache: ThreadSafeIntObjectMap<FieldId>
+    private lateinit var methodIdCache: ThreadSafeIntObjectMap<MethodId>
 
     init {
         // parse header
@@ -66,6 +66,12 @@ class DexFile(
         this.fieldIds = SizeOff(stream.u32(), stream.u32())
         this.methodIds = SizeOff(stream.u32(), stream.u32())
         this.classDefinitions = SizeOff(stream.u32(), stream.u32())
+
+        // Size the caches from the header so the maps don't grow entry by entry
+        stringCache = ThreadSafeIntObjectMap(stringIds.size)
+        classTypeCache = ThreadSafeIntObjectMap(typeIds.size)
+        fieldIdCache = ThreadSafeIntObjectMap(fieldIds.size)
+        methodIdCache = ThreadSafeIntObjectMap(methodIds.size)
 
         val defsSize: Int = classDefinitions.size
         val classes = ArrayList<DexClass>(defsSize)

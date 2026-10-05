@@ -51,7 +51,7 @@ class DexProcessor(
         allowErrors = allowErrors,
     )
 
-    private val _classes: LinkedHashMap<String, ByteArray> = LinkedHashMap()
+    private var _classes: LinkedHashMap<String, ByteArray> = LinkedHashMap()
 
     val classes: Map<String, ByteArray>
         get() = _classes
@@ -84,6 +84,10 @@ class DexProcessor(
 
         totalClassCount = dexFiles.sumOf { it.classes.size }
 
+        // Pre-size the result map: it will hold one entry per class and
+        // growing a 400k+ entry map bucket by bucket is pure rehash waste
+        _classes = LinkedHashMap((totalClassCount * 4 + 2) / 3)
+
         callback.onProgress(
             translated = 0,
             warnings = 0,
@@ -93,11 +97,11 @@ class DexProcessor(
 
         val coroutineDispatcher = coroutineDispatcher
         dexFiles.suspendMapTo(
-            ArrayList<Unit>(),
+            ArrayList(dexFiles.size),
             coroutineDispatcher
         ) { dex ->
             dex.classes.suspendMapTo(
-                target = ArrayList(),
+                target = ArrayList(dex.classes.size),
                 dispatcher = coroutineDispatcher,
                 f = ::translateClass
             )

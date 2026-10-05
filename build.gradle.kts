@@ -3,6 +3,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 plugins {
     kotlin("jvm") version "2.3.10"
     java
+    jacoco
 }
 
 group = "hu.oandras.kJarify"
@@ -49,6 +50,13 @@ tasks.test {
     useJUnitPlatform()
 }
 
+tasks.jacocoTestReport {
+    reports {
+        xml.required.set(true)
+        html.required.set(true)
+    }
+}
+
 // Profiler: production parity run (assertions OFF, like `java -jar`).
 // Usage: ./gradlew profiler
 tasks.register<Test>("profiler") {
@@ -56,6 +64,8 @@ tasks.register<Test>("profiler") {
     classpath = sourceSets["test"].runtimeClasspath
     useJUnitPlatform()
     enableAssertions = false
+    // Coverage instrumentation would distort profiler numbers
+    the<org.gradle.testing.jacoco.plugins.JacocoTaskExtension>().isEnabled = false
     // test2 needs GBs of retained classes per run; -Pheap=8g to override
     maxHeapSize = (project.findProperty("heap") as String?) ?: "12g"
     filter { includeTestsMatching("hu.oandras.kJarify.ProfilerTest") }

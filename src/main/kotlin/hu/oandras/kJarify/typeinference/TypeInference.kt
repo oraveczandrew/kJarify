@@ -75,6 +75,10 @@ internal object TypeInference {
     private fun pruneHandlers(allHandlers: ArrayMap<DalvikInstruction, out List<CatchItem>>): Map<DalvikInstruction, List<CatchItem>> {
         val result: ArrayMap<DalvikInstruction, MutableList<CatchItem>> = ArrayMap()
 
+        // Hoisted: only dedups handlers of a single instruction, clear() keeps
+        // the backing array (ScatterSet).
+        val types: MutableScatterSet<ByteArray> = MutableScatterSet()
+
         for (i in 0 until allHandlers.size) {
             val instr = allHandlers.keyAt(i)
             val dalvikOpcode = instr.type
@@ -95,7 +99,7 @@ internal object TypeInference {
 
             val handlers = allHandlers.valueAt(i)
 
-            val types: ArraySet<ByteArray> = ArraySet()
+            types.clear()
             for (k in handlers.indices) {
                 val handler = handlers[k]
                 val className: ByteArray = handler.className
@@ -170,7 +174,7 @@ internal object TypeInference {
 
         val types: MutableIntObjectMap<TypeInfo> = MutableIntObjectMap(byteCode.size)
         types.put(0, fromParams(method, code.registerCount))
-        val dirty = MutableIntSet()
+        val dirty = MutableIntSet(byteCode.size)
         dirty.add(0)
 
         val FUNCS = DalvikInstructionVisitor.FUNCS

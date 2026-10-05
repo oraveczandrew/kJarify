@@ -141,6 +141,10 @@ internal sealed interface PoolData {
 
 @Suppress("ConstPropertyName", "SpellCheckingInspection", "PropertyName")
 internal abstract class ConstantPool {
+    // NOT thread-safe by design: one instance serves a single class translation
+    // (created per writeWithOptimizationOptions call, never shared between
+    // coroutines). This is what allows the reusable lookup probes and buffers
+    // below - they must never escape into the maps or another thread.
 
     private val lookup: Array<MutableObjectIntMap<PoolData>> = Array(MAX_CONST + 1) {
         MutableObjectIntMap()
@@ -167,6 +171,10 @@ internal abstract class ConstantPool {
     private val longProbe = PoolData.LongData(0, 0L)
     private val intArrayProbe = PoolData.IntArrayData(0, IntArray(0))
     private val byteArrayProbe = PoolData.ByteArrayData(0, ByteArray(0))
+
+    // Reusable 2-slot buffer for pair-shaped IntArrayData lookups
+    // (name-and-type, member refs). Same confinement rules as the probes.
+    private val intPairProbe = IntArray(2)
 
     @Throws(ClassFileLimitExceeded::class)
     private fun intern(tag: Int, constantData: PoolData): Int {
@@ -206,16 +214,6 @@ internal abstract class ConstantPool {
             return map[longProbe]
         }
         return intern(tag, PoolData.LongData(tag, args))
-    }
-
-    private fun get(tag: Int, args: IntArray): Int {
-        val map = lookup[tag]
-        intArrayProbe.tag = tag
-        intArrayProbe.intArray = args
-        if (map.containsKey(intArrayProbe)) {
-            return map[intArrayProbe]
-        }
-        return intern(tag, PoolData.IntArrayData(tag, args))
     }
 
     @Suppress("SameParameterValue")
@@ -274,15 +272,29 @@ internal abstract class ConstantPool {
 
     @Throws(ClassFileLimitExceeded::class)
     fun namedArrayRef(name: ByteArray, desc: ByteArray): Int {
-        return get(CONSTANT_NameAndType, intArrayOf(utf8Ref(name), utf8Ref(desc)))
+        return getPair(CONSTANT_NameAndType, utf8Ref(name), utf8Ref(desc))
     }
 
     @Throws(ClassFileLimitExceeded::class)
     private fun mixin(tag: Int, triple: MFIdMixin): Int {
-        return get(
+        return getPair(
             tag,
-            intArrayOf(classRef(triple.className), namedArrayRef(triple.name, triple.descriptor))
+            classRef(triple.className),
+            namedArrayRef(triple.name, triple.descriptor)
         )
+    }
+
+    @Throws(ClassFileLimitExceeded::class)
+    private fun getPair(tag: Int, first: Int, second: Int): Int {
+        intPairProbe[0] = first
+        intPairProbe[1] = second
+        val map = lookup[tag]
+        intArrayProbe.tag = tag
+        intArrayProbe.intArray = intPairProbe
+        if (map.containsKey(intArrayProbe)) {
+            return map[intArrayProbe]
+        }
+        return intern(tag, PoolData.IntArrayData(tag, intArrayOf(first, second)))
     }
 
     @Throws(ClassFileLimitExceeded::class)
