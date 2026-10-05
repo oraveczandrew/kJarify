@@ -1,7 +1,7 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
-    kotlin("jvm") version "2.3.10"
+    kotlin("jvm") version "2.4.20"
     java
     jacoco
     `maven-publish`
@@ -27,15 +27,15 @@ repositories.apply {
 dependencies.apply {
     testImplementation(kotlin("test"))
     implementation("commons-cli:commons-cli:1.11.0")
-    implementation("androidx.collection:collection:1.5.0")
+    implementation("androidx.collection:collection:1.6.0")
 
-    val coroutinesVersion = "1.10.2"
+    val coroutinesVersion = "1.11.0"
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$coroutinesVersion")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core-jvm:$coroutinesVersion")
 
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:$coroutinesVersion")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test-jvm:$coroutinesVersion")
-    testImplementation("org.junit.jupiter:junit-jupiter-params:5.14.2")
+    testImplementation("org.junit.jupiter:junit-jupiter-params:5.14.4")
 }
 
 tasks.register<Jar>("fatJar") {
@@ -75,7 +75,7 @@ tasks.register<Test>("profiler") {
     useJUnitPlatform()
     enableAssertions = false
     // Coverage instrumentation would distort profiler numbers
-    the<org.gradle.testing.jacoco.plugins.JacocoTaskExtension>().isEnabled = false
+    the<JacocoTaskExtension>().isEnabled = false
     // test2 needs GBs of retained classes per run; -Pheap=8g to override
     maxHeapSize = (project.findProperty("heap") as String?) ?: "12g"
     filter { includeTestsMatching("hu.oandras.kJarify.ProfilerTest") }
