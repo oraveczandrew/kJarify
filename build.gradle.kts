@@ -1,3 +1,4 @@
+import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
@@ -39,6 +40,7 @@ dependencies.apply {
 }
 
 tasks.register<Jar>("fatJar") {
+    description = "Assembles a self-contained fat jar with Main-Class hu.oandras.kJarify.MainKt."
     archiveBaseName = "kJarify-fat"
 
     manifest.apply {
@@ -70,6 +72,7 @@ tasks.jacocoTestReport {
 // Profiler: production parity run (assertions OFF, like `java -jar`).
 // Usage: ./gradlew profiler
 tasks.register<Test>("profiler") {
+    description = "Runs ProfilerTest with production parity (assertions OFF, no JaCoCo)."
     testClassesDirs = sourceSets["test"].output.classesDirs
     classpath = sourceSets["test"].runtimeClasspath
     useJUnitPlatform()
@@ -102,7 +105,7 @@ tasks.register<Test>("profiler") {
     }
     testLogging {
         showStandardStreams = true
-        exceptionFormat = org.gradle.api.tasks.testing.logging.TestExceptionFormat.FULL
+        exceptionFormat = TestExceptionFormat.FULL
     }
 }
 
