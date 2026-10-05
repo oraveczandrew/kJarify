@@ -64,7 +64,8 @@ internal object Dup2izeOptimization: JvmOptimization() {
                 }
             }
 
-            val result: ArrayList<UseRange> = ArrayList()
+            // At most left + right survive below
+            val result: ArrayList<UseRange> = ArrayList(2)
 
             if (left.size >= 2) {
                 result.add(UseRange(left))

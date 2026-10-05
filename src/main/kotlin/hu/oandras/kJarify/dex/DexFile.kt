@@ -73,12 +73,9 @@ class DexFile(
         fieldIdCache = ThreadSafeIntObjectMap(fieldIds.size)
         methodIdCache = ThreadSafeIntObjectMap(methodIds.size)
 
-        val defsSize: Int = classDefinitions.size
-        val classes = ArrayList<DexClass>(defsSize)
-        for (i in 0 until defsSize) {
-            classes.add(DexClass(this, classDefinitions.offset, i))
-        }
-        this.classes = classes
+        this.classes = Array(classDefinitions.size) { i ->
+            DexClass(this, classDefinitions.offset, i)
+        }.toList()
     }
 
     internal fun stream(offset: Int): Reader {
