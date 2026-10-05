@@ -43,10 +43,10 @@ class DexFile(
     @JvmField
     val classes: List<DexClass>
 
-    private lateinit var stringCache: ThreadSafeIntObjectMap<ByteArray>
-    private lateinit var classTypeCache: ThreadSafeIntObjectMap<ByteArray>
-    private lateinit var fieldIdCache: ThreadSafeIntObjectMap<FieldId>
-    private lateinit var methodIdCache: ThreadSafeIntObjectMap<MethodId>
+    private var stringCache: ThreadSafeIntObjectMap<ByteArray>
+    private var classTypeCache: ThreadSafeIntObjectMap<ByteArray>
+    private var fieldIdCache: ThreadSafeIntObjectMap<FieldId>
+    private var methodIdCache: ThreadSafeIntObjectMap<MethodId>
 
     init {
         // parse header
