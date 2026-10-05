@@ -15,6 +15,9 @@ build/
 .idea/shelf/
 .idea/httpRequests/
 .idea/AndroidProjectSystem.xml
+.idea/gradle.xml
+.idea/misc.xml
+.idea/kotlinc.xml
 *.iws
 *.iml
 *.ipr
