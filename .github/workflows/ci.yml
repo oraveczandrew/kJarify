@@ -7,12 +7,14 @@ on:
       - 'LICENSE.txt'
       - '.idea/**'
       - '.gitignore'
+      - 'jitpack.yml'
   pull_request:
     paths-ignore:
       - '**.md'
       - 'LICENSE.txt'
       - '.idea/**'
       - '.gitignore'
+      - 'jitpack.yml'
 
 # Cancel superseded runs on the same branch
 concurrency:
