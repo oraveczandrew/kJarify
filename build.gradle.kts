@@ -4,6 +4,15 @@ plugins {
     kotlin("jvm") version "2.3.10"
     java
     jacoco
+    `maven-publish`
+}
+
+publishing {
+    publications {
+        create<MavenPublication>("mavenJava") {
+            from(components["java"])
+        }
+    }
 }
 
 group = "hu.oandras.kJarify"
