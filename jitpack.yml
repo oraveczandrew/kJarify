@@ -3,9 +3,10 @@ before_install:
   # NOTE: sdkman gradle archives are intermittently corrupt on JitPack builders
   # ("The archive was corrupt and has been removed"), so fetch the distribution
   # directly from services.gradle.org instead of `sdk install gradle`.
+  - env | grep -iE "gradle|java|_opts" | sort
   - curl -sSL --fail -o /tmp/gradle.zip https://services.gradle.org/distributions/gradle-9.8.0-bin.zip && ls -la /tmp/gradle.zip && sha256sum /tmp/gradle.zip
   - rm -rf /tmp/gradle-9.8.0 && unzip -o /tmp/gradle.zip -d /tmp | tail -n 2 && ls -la /tmp/gradle-9.8.0/lib/agents/
   - unzip -l /tmp/gradle-9.8.0/lib/agents/gradle-instrumentation-agent-9.8.0.jar | grep Agent.class
-  - /tmp/gradle-9.8.0/bin/gradle --version
+  - env -u GRADLE_OPTS -u JAVA_OPTS /tmp/gradle-9.8.0/bin/gradle --version
 install:
-  - /tmp/gradle-9.8.0/bin/gradle build publishToMavenLocal -Pgroup=$GROUP -Pversion=$VERSION --console=plain --info
+  - env -u GRADLE_OPTS -u JAVA_OPTS /tmp/gradle-9.8.0/bin/gradle build publishToMavenLocal -Pgroup=$GROUP -Pversion=$VERSION --console=plain --info
